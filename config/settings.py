@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "movies.apps.MoviesConfig", ## Application หลักสำหรับจัดการ Movie Watchlist
+    # Django จะค้นหา models, migrations, admin และส่วนอื่นของ app นี้
 ]
 
 MIDDLEWARE = [
