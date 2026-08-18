@@ -9,4 +9,7 @@ urlpatterns = [
     # หน้าแรกของเว็บไซต์ใช้ movie_list view
     # name="movie_list" ใช้อ้างถึง URL นี้จาก template หรือ Django code ภายหลัง
     path("", views.movie_list, name="movie_list"),
+
+    # หน้าเพิ่ม Movie ใหม่
+    path("movies/add/", views.movie_add, name="movie_add"),
 ]

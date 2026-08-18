@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,38 +10,46 @@
 
 <body>
     <main>
-        <h1>Movie list</h1>
+        <h1>Movie Watchlist</h1>
+
+        <!--
+            ใช้ชื่อ URL movie_add แทนการ hard-code path
+            Django จะหา path ที่มี name="movie_add" จาก movies/urls.py
+        -->
+        <p>
+            <a href="{% url 'movie_add' %}">Add Movie</a>
+        </p>
 
         <!--
             movies มาจาก context ใน movie_list view
             Django Template จะวนแสดง Movie object ทีละรายการ
         -->
         {% for movie in movies %}
-        <article>
-            <h2>{{ movie.title }}</h2>
+            <article>
+                <h2>{{ movie.title }}</h2>
 
-            <p>Release Year: {{ movie.release_year }}</p>
-            <p>Genre: {{ movie.genre }}</p>
-            <p>Rating: {{ movie.personal_rating }}</p>
+                <p>Release Year: {{ movie.release_year }}</p>
+                <p>Genre: {{ movie.genre }}</p>
+                <p>Rating: {{ movie.personal_rating }}</p>
 
-            <!-- แสดงสถานะจาก Boolean field watched -->
-            {% if movie.watched %}
-            <p>Status: Watched</p>
-            {% else %}
-            <p>Status: Unwatched</p>
-            {% endif %}
+                <!-- แสดงสถานะจาก Boolean field watched -->
+                {% if movie.watched %}
+                    <p>Status: Watched</p>
+                {% else %}
+                    <p>Status: Unwatched</p>
+                {% endif %}
 
-            <p>Added: {{ movie.date_added }}</p>
-        </article>
+                <p>Added: {{ movie.date_added }}</p>
+            </article>
 
-        <hr>
+            <hr>
 
         {% empty %}
-        <!--
+            <!--
                 ส่วนนี้ทำงานเมื่อ QuerySet ไม่มี Movie
                 ทำให้หน้า Home ยังมีข้อความแสดงแทนที่จะว่างเปล่า
             -->
-        <p>No movies in your watchlist yet.</p>
+            <p>No movies in your watchlist yet.</p>
 
         {% endfor %}
     </main>

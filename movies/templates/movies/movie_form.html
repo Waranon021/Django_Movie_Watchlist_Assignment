@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Add Movie | Movie Watchlist</title>
+</head>
+
+<body>
+    <main>
+        <h1>Add Movie</h1>
+
+        <!--
+            method="post" ใช้ส่งข้อมูลเพื่อสร้าง Movie ใหม่
+
+            action ไม่ถูกกำหนดไว้
+            ดังนั้น form จะ submit กลับ URL ปัจจุบัน
+            ซึ่งก็คือ /movies/add/
+        -->
+        <form method="post">
+
+            <!--
+                CSRF token ใช้ป้องกัน Cross-Site Request Forgery
+                Django จะตรวจ token ก่อนยอมรับ POST request
+            -->
+            {% csrf_token %}
+
+            <!--
+                Django render fields ที่มาจาก MovieForm
+                .as_p จะครอบแต่ละ field ด้วย <p>
+                รอบนี้ใช้แบบพื้นฐานก่อน แล้วค่อยออกแบบ UI ภายหลัง
+            -->
+            {{ form.as_p }}
+
+            <button type="submit">Save Movie</button>
+        </form>
+
+        <p>
+            <a href="{% url 'movie_list' %}">Back to Watchlist</a>
+        </p>
+    </main>
+</body>
+</html>
