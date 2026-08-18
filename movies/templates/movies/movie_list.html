@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Personal Movie Watchlist</title>
+</head>
+
+<body>
+    <main>
+        <h1>Movie list</h1>
+
+        <!--
+            movies มาจาก context ใน movie_list view
+            Django Template จะวนแสดง Movie object ทีละรายการ
+        -->
+        {% for movie in movies %}
+        <article>
+            <h2>{{ movie.title }}</h2>
+
+            <p>Release Year: {{ movie.release_year }}</p>
+            <p>Genre: {{ movie.genre }}</p>
+            <p>Rating: {{ movie.personal_rating }}</p>
+
+            <!-- แสดงสถานะจาก Boolean field watched -->
+            {% if movie.watched %}
+            <p>Status: Watched</p>
+            {% else %}
+            <p>Status: Unwatched</p>
+            {% endif %}
+
+            <p>Added: {{ movie.date_added }}</p>
+        </article>
+
+        <hr>
+
+        {% empty %}
+        <!--
+                ส่วนนี้ทำงานเมื่อ QuerySet ไม่มี Movie
+                ทำให้หน้า Home ยังมีข้อความแสดงแทนที่จะว่างเปล่า
+            -->
+        <p>No movies in your watchlist yet.</p>
+
+        {% endfor %}
+    </main>
+</body>
+</html>

@@ -15,11 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Django Admin
+    path("admin/", admin.site.urls),
+
+    # ส่ง URL หน้าเว็บไซต์หลักต่อไปให้ movies app จัดการ
+    # ทำให้ URL "/" เชื่อมไปยัง movies/urls.py
+    path("", include("movies.urls")),
 ]
-
-
-#เป็น URL router ระดับ project ภายหลังจะเชื่อม URL เข้าด้วยกัน
