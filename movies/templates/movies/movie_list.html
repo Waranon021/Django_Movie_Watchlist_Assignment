@@ -12,6 +12,26 @@
         <h1>Movie Watchlist</h1>
 
         <!--
+            Search ใช้ GET เพราะเป็นการอ่าน/filter ข้อมูลเท่านั้น
+            ไม่ได้สร้าง แก้ไข หรือลบข้อมูลใน database
+
+            เมื่อ submit browser จะสร้าง URL เช่น:
+            /?q=batman
+        -->
+        <form method="get">
+            <label for="movie-search">Search your watchlist:</label>
+
+            <input type="search" id="movie-search" name="q" value="{{ query }}" placeholder="Search by movie title...">
+
+            <button type="submit">Search</button>
+
+            {% if query %}
+            <a href="{% url 'movie_list' %}">Clear Search</a>
+            {% endif %}
+
+        </form>
+
+        <!--
             ใช้ชื่อ URL movie_add แทนการ hard-code path
             Django จะหา URL จาก name="movie_add"
         -->
@@ -63,7 +83,18 @@
                 <hr>
 
             {% empty %}
-                <p>No unwatched movies in your watchlist.</p>
+            <!--
+                    ถ้ามีคำค้น แต่ไม่พบ Movie ที่ตรงกับคำค้นใน PLAN TO WATCH
+                    จะแสดงข้อความว่าการค้นหานี้ไม่พบผลลัพธ์
+
+                    ถ้าไม่มีคำค้นเลย หมายความว่า Watchlist
+                    ไม่มี Movie ที่มี watched=False อยู่จริง
+                -->
+            {% if query %}
+            <p>No unwatched movies found for "{{ query }}".</p>
+            {% else %}
+            <p>No unwatched movies in your watchlist.</p>
+            {% endif %}
             {% endfor %}
         </section>
 
@@ -111,7 +142,18 @@
                 <hr>
 
             {% empty %}
-                <p>No watched movies yet.</p>
+            <!--
+                    ถ้ามีคำค้น แต่ไม่พบ Movie ที่ตรงกับคำค้นใน WATCHED
+                    จะแสดงข้อความว่าการค้นหานี้ไม่พบผลลัพธ์
+
+                    ถ้าไม่มีคำค้นเลย หมายความว่ายังไม่มี Movie
+                    ที่มี watched=True อยู่ใน Watchlist
+                -->
+            {% if query %}
+            <p>No watched movies found for "{{ query }}".</p>
+            {% else %}
+            <p>No watched movies yet.</p>
+            {% endif %}
             {% endfor %}
         </section>
     </main>

@@ -7,31 +7,51 @@ from .models import Movie
 
 def movie_list(request):
     """
-    แสดง Movie ทั้งหมดในหน้า Home
-    โดยแยกเป็น Plan to Watch และ Watched
+    แสดง Movie ในหน้า Home โดยรองรับการค้นหาจากชื่อหนัง
 
-    Movie ภายในแต่ละกลุ่มเรียงจากรายการที่เพิ่มล่าสุด
-    ไปหารายการเก่าที่สุด
+    ถ้ามี query จากช่อง Search:
+        filter Movie ตาม title ก่อน
+
+    จากนั้นแยกผลลัพธ์เป็น:
+        - Plan to Watch
+        - Watched
+
+    แต่ละกลุ่มยังเรียง newest first ตาม date_added
     """
 
-    # watched=False คือหนังที่ผู้ใช้เพิ่มไว้แต่ยังไม่ได้ดู
-    # หน้า Home จะแสดงกลุ่มนี้เป็น PLAN TO WATCH
-    # "-date_added" ทำให้ Movie ที่เพิ่มล่าสุดอยู่ก่อน
-    plan_to_watch_movies = Movie.objects.filter(
+    # รับคำค้นจาก URL query parameter ชื่อ q
+    # ตัวอย่าง URL: /?q=batman
+    # ถ้าไม่มี q จะใช้ string ว่างแทน
+    query = request.GET.get("q", "").strip()
+
+    # เริ่มจาก QuerySet ของ Movie ทั้งหมด
+    # จากนั้นค่อยเพิ่ม filter ตามสิ่งที่ผู้ใช้ค้นหา
+    movies = Movie.objects.all()
+
+    # ถ้ามีคำค้นจริง จึง filter ตาม title
+    # __icontains หมายถึงค้นหาข้อความที่มีคำนี้อยู่
+    # โดยไม่สนตัวพิมพ์เล็กหรือใหญ่
+    if query:
+        movies = movies.filter(title__icontains=query)
+
+    # แยก Movie ที่ยังไม่ได้ดูออกเป็น PLAN TO WATCH
+    # และยังคงเรียงจากรายการที่เพิ่มล่าสุดก่อน
+    plan_to_watch_movies = movies.filter(
         watched=False
     ).order_by("-date_added")
 
-    # watched=True คือหนังที่ผู้ใช้ดูแล้ว
-    # กลุ่มนี้แสดงแยกใน WATCHED
-    watched_movies = Movie.objects.filter(
+    # แยก Movie ที่ดูแล้วออกเป็น WATCHED
+    # และยังคงเรียง newest first เช่นเดียวกัน
+    watched_movies = movies.filter(
         watched=True
     ).order_by("-date_added")
 
-    # ส่ง QuerySet ทั้งสองกลุ่มไปยัง template
-    # ทำให้ template สามารถ render แต่ละ section แยกกันได้
+    # ส่งทั้ง QuerySet และคำค้นปัจจุบันไปยัง template
+    # query ใช้แสดงค่าที่ผู้ใช้ค้นหาไว้ในช่อง Search
     context = {
         "plan_to_watch_movies": plan_to_watch_movies,
         "watched_movies": watched_movies,
+        "query": query,
     }
 
     return render(request, "movies/movie_list.html", context)
