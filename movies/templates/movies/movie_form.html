@@ -4,12 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Add Movie | Movie Watchlist</title>
+    <title>
+    {% if movie %}
+        Edit Movie
+    {% else %}
+        Add Movie
+    {% endif %}
+    | Movie Watchlist
+</title>
+
 </head>
 
 <body>
     <main>
-        <h1>Add Movie</h1>
+        <h1>
+    {% if movie %}
+        Edit Movie
+    {% else %}
+        Add Movie
+    {% endif %}
+</h1>
 
         <!--
             method="post" ใช้ส่งข้อมูลเพื่อสร้าง Movie ใหม่
@@ -33,7 +47,14 @@
             -->
             {{ form.as_p }}
 
-            <button type="submit">Save Movie</button>
+            <button type="submit">
+    {% if movie %}
+        Save Changes
+    {% else %}
+        Add Movie
+    {% endif %}
+</button>
+
         </form>
 
         <p>
