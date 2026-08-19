@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from .forms import MovieForm
 from .models import Movie
@@ -7,21 +8,32 @@ from .models import Movie
 def movie_list(request):
     """
     แสดง Movie ทั้งหมดในหน้า Home
-    โดยเรียงจากรายการที่ถูกเพิ่มล่าสุดไปหารายการเก่าที่สุด
+    โดยแยกเป็น Plan to Watch และ Watched
+
+    Movie ภายในแต่ละกลุ่มเรียงจากรายการที่เพิ่มล่าสุด
+    ไปหารายการเก่าที่สุด
     """
 
-    # Django ORM อ่านข้อมูลจากตาราง movies_movie ใน PostgreSQL
-    # เครื่องหมาย "-" หน้า date_added หมายถึงเรียงแบบ descending
-    # จึงได้ Movie ที่เพิ่มล่าสุดอยู่ก่อน
-    movies = Movie.objects.order_by("-date_added")
+    # watched=False คือหนังที่ผู้ใช้เพิ่มไว้แต่ยังไม่ได้ดู
+    # หน้า Home จะแสดงกลุ่มนี้เป็น PLAN TO WATCH
+    # "-date_added" ทำให้ Movie ที่เพิ่มล่าสุดอยู่ก่อน
+    plan_to_watch_movies = Movie.objects.filter(
+        watched=False
+    ).order_by("-date_added")
 
-    # ส่งข้อมูล Movie ไปยัง template ผ่าน context dictionary
-    # key "movies" จะกลายเป็นตัวแปรชื่อ movies ที่ใช้ใน HTML template
+    # watched=True คือหนังที่ผู้ใช้ดูแล้ว
+    # กลุ่มนี้แสดงแยกใน WATCHED
+    watched_movies = Movie.objects.filter(
+        watched=True
+    ).order_by("-date_added")
+
+    # ส่ง QuerySet ทั้งสองกลุ่มไปยัง template
+    # ทำให้ template สามารถ render แต่ละ section แยกกันได้
     context = {
-        "movies": movies,
+        "plan_to_watch_movies": plan_to_watch_movies,
+        "watched_movies": watched_movies,
     }
 
-    # render() รวม template + context แล้วคืน HTTP response ให้ browser
     return render(request, "movies/movie_list.html", context)
 
 
@@ -139,3 +151,32 @@ def movie_delete(request, movie_id):
     }
 
     return render(request, "movies/movie_confirm_delete.html", context)
+
+
+# Django มี decorator นี้โดยตรงสำหรับ view ที่ควรรับเฉพาะ POST.
+# นี่เหมาะกับการเปลี่ยนสถานะ เพราะ GET ควรใช้สำหรับอ่าน/เปิดหน้า ไม่ใช่ trigger การเปลี่ยนข้อมูล ส่วน POST เป็น unsafe method ที่สามารถป้องกันด้วย CSRF ได้
+@require_POST
+def movie_toggle_watched(request, movie_id):
+    """
+    สลับสถานะ watched ของ Movie
+
+    False → True  : Plan to Watch → Watched
+    True  → False : Watched → Plan to Watch
+
+    View นี้รับเฉพาะ POST request เพราะมีการเปลี่ยนข้อมูลใน database
+    """
+
+    # ค้นหา Movie จาก primary key
+    # ถ้าไม่มี Movie id นี้ Django จะตอบกลับด้วย HTTP 404
+    movie = get_object_or_404(Movie, pk=movie_id)
+
+    # Boolean สามารถสลับค่าได้ด้วย not
+    # False จะกลายเป็น True และ True จะกลายเป็น False
+    movie.watched = not movie.watched
+
+    # บันทึกเฉพาะ field watched ที่มีการเปลี่ยนแปลง
+    # ไม่จำเป็นต้อง update field อื่นของ Movie
+    movie.save(update_fields=["watched"])
+
+    # เมื่อเปลี่ยนสถานะสำเร็จ กลับไปหน้า Movie Watchlist
+    return redirect("movie_list")

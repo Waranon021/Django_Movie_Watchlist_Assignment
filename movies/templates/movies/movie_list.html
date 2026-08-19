@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,67 +13,107 @@
 
         <!--
             ใช้ชื่อ URL movie_add แทนการ hard-code path
-            Django จะหา path ที่มี name="movie_add" จาก movies/urls.py
+            Django จะหา URL จาก name="movie_add"
         -->
         <p>
             <a href="{% url 'movie_add' %}">Add Movie</a>
         </p>
 
 
-        <!--
-            movies มาจาก context ใน movie_list view
-            Django Template จะวนแสดง Movie object ทีละรายการ
-        -->
-        {% for movie in movies %}
-            <article>
-                <h2>{{ movie.title }}</h2>
+        <!-- ============================================
+             PLAN TO WATCH
+             watched=False
+             ============================================ -->
+        <section>
+            <h2>PLAN TO WATCH</h2>
+            <p>Unwatched movies in your watchlist</p>
 
-                <p>Release Year: {{ movie.release_year }}</p>
-                <p>Genre: {{ movie.genre }}</p>
-                <p>Rating: {{ movie.personal_rating }}</p>
-
-
-                <!-- แสดงสถานะจาก Boolean field watched -->
-                {% if movie.watched %}
-                    <p>Status: Watched</p>
-                {% else %}
-                    <p>Status: Unwatched</p>
-                {% endif %}
-
-                <p>Added: {{ movie.date_added }}</p>
-
-
-                <!--
-                        ส่ง id ของ Movie เข้า URL movie_edit
-                        เพื่อระบุว่าจะต้องแก้ไข Movie object ใด
-                    -->
-                <p>
-                    <!--
-                        ส่ง id ของ Movie ไปยังหน้า Edit
-                        เพื่อระบุ Movie object ที่ต้องการแก้ไข
-                    -->
-                    <a href="{% url 'movie_edit' movie.id %}">Edit</a>
-
-                    <!--
-                        Delete link จะเปิดหน้า confirmation ก่อน
-                        การกด link นี้ยังไม่ลบข้อมูลจริง
-                    -->
-                    <a href="{% url 'movie_delete' movie.id %}">Delete</a>
-                </p>
-
-
-            </article>
-
-            <hr>
-
-        {% empty %}
             <!--
-                ส่วนนี้ทำงานเมื่อ QuerySet ไม่มี Movie
-                ทำให้หน้า Home ยังมีข้อความแสดงแทนที่จะว่างเปล่า
+                plan_to_watch_movies มาจาก movie_list view
+                และมีเฉพาะ Movie ที่ watched=False
             -->
-            <p>No movies in your watchlist yet.</p>
+            {% for movie in plan_to_watch_movies %}
+                <article>
+                    <h3>{{ movie.title }}</h3>
 
-        {% endfor %}
+                    <p>Release Year: {{ movie.release_year }}</p>
+                    <p>Genre: {{ movie.genre }}</p>
+                    <p>Rating: {{ movie.personal_rating }}</p>
+                    <p>Status: Unwatched</p>
+                    <p>Added: {{ movie.date_added }}</p>
+
+                    <!--
+                        การเปลี่ยนสถานะเป็นการแก้ข้อมูล
+                        จึงใช้ POST form และ CSRF token
+                    -->
+                    <form
+                        method="post"
+                        action="{% url 'movie_toggle_watched' movie.id %}"
+                    >
+                        {% csrf_token %}
+                        <button type="submit">Mark as Watched</button>
+                    </form>
+
+                    <p>
+                        <a href="{% url 'movie_edit' movie.id %}">Edit</a>
+                        <a href="{% url 'movie_delete' movie.id %}">Delete</a>
+                    </p>
+                </article>
+
+                <hr>
+
+            {% empty %}
+                <p>No unwatched movies in your watchlist.</p>
+            {% endfor %}
+        </section>
+
+
+        <!-- ============================================
+             WATCHED
+             watched=True
+             ============================================ -->
+        <section>
+            <h2>WATCHED</h2>
+            <p>Movies you've watched</p>
+
+            <!--
+                watched_movies มาจาก movie_list view
+                และมีเฉพาะ Movie ที่ watched=True
+            -->
+            {% for movie in watched_movies %}
+                <article>
+                    <h3>{{ movie.title }}</h3>
+
+                    <p>Release Year: {{ movie.release_year }}</p>
+                    <p>Genre: {{ movie.genre }}</p>
+                    <p>Rating: {{ movie.personal_rating }}</p>
+                    <p>Status: Watched</p>
+                    <p>Added: {{ movie.date_added }}</p>
+
+                    <!--
+                        ใช้ view เดียวกับปุ่มด้านบน
+                        เพราะ movie_toggle_watched จะสลับ Boolean ให้เอง
+                    -->
+                    <form
+                        method="post"
+                        action="{% url 'movie_toggle_watched' movie.id %}"
+                    >
+                        {% csrf_token %}
+                        <button type="submit">Mark as Unwatched</button>
+                    </form>
+
+                    <p>
+                        <a href="{% url 'movie_edit' movie.id %}">Edit</a>
+                        <a href="{% url 'movie_delete' movie.id %}">Delete</a>
+                    </p>
+                </article>
+
+                <hr>
+
+            {% empty %}
+                <p>No watched movies yet.</p>
+            {% endfor %}
+        </section>
     </main>
 </body>
 </html>

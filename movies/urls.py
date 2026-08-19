@@ -9,10 +9,8 @@ from . import views
 urlpatterns = [
     # หน้า Home แสดง Movie ทั้งหมด
     path("", views.movie_list, name="movie_list"),
-
     # หน้าเพิ่ม Movie ใหม่
     path("movies/add/", views.movie_add, name="movie_add"),
-
     # หน้าแก้ไข Movie
     # <int:movie_id> รับตัวเลขจาก URL แล้วส่งให้ movie_edit view
     path(
@@ -20,12 +18,19 @@ urlpatterns = [
         views.movie_edit,
         name="movie_edit",
     ),
-
     # หน้า confirmation สำหรับลบ Movie
     # movie_id ระบุ Movie object ที่ผู้ใช้ต้องการลบ
     path(
         "movies/<int:movie_id>/delete/",
         views.movie_delete,
         name="movie_delete",
+    ),
+
+    # เปลี่ยนสถานะ Movie ระหว่าง Watched และ Unwatched
+    # การเปลี่ยนข้อมูลจริงอนุญาตเฉพาะ POST ที่ view
+    path(
+        "movies/<int:movie_id>/toggle-watched/",
+        views.movie_toggle_watched,
+        name="movie_toggle_watched",
     ),
 ]
