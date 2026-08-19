@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Delete Movie | Movie Watchlist</title>
+</head>
+
+<body>
+    <main>
+        <h1>Delete Movie</h1>
+
+        <!--
+            แสดงชื่อ Movie เพื่อให้ผู้ใช้ตรวจสอบ
+            ก่อนยืนยันการลบข้อมูลจริง
+        -->
+        <p>
+            Are you sure you want to delete
+            <strong>{{ movie.title }}</strong>?
+        </p>
+
+        <!--
+            การลบข้อมูลจริงใช้ POST request
+            ไม่ใช้ link หรือ GET request โดยตรง
+        -->
+        <form method="post">
+
+            <!--
+                CSRF token ป้องกัน POST request
+                ที่ไม่ได้มาจาก form ที่ Django อนุญาต
+            -->
+            {% csrf_token %}
+
+            <button type="submit">Yes, Delete</button>
+        </form>
+
+        <p>
+            <!-- ยกเลิกการลบและกลับหน้า Movie Watchlist -->
+            <a href="{% url 'movie_list' %}">Cancel</a>
+        </p>
+    </main>
+</body>
+</html>

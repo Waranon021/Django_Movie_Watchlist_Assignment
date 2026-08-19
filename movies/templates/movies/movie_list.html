@@ -20,6 +20,7 @@
             <a href="{% url 'movie_add' %}">Add Movie</a>
         </p>
 
+
         <!--
             movies มาจาก context ใน movie_list view
             Django Template จะวนแสดง Movie object ทีละรายการ
@@ -32,6 +33,7 @@
                 <p>Genre: {{ movie.genre }}</p>
                 <p>Rating: {{ movie.personal_rating }}</p>
 
+
                 <!-- แสดงสถานะจาก Boolean field watched -->
                 {% if movie.watched %}
                     <p>Status: Watched</p>
@@ -40,6 +42,27 @@
                 {% endif %}
 
                 <p>Added: {{ movie.date_added }}</p>
+
+
+                <!--
+                        ส่ง id ของ Movie เข้า URL movie_edit
+                        เพื่อระบุว่าจะต้องแก้ไข Movie object ใด
+                    -->
+                <p>
+                    <!--
+                        ส่ง id ของ Movie ไปยังหน้า Edit
+                        เพื่อระบุ Movie object ที่ต้องการแก้ไข
+                    -->
+                    <a href="{% url 'movie_edit' movie.id %}">Edit</a>
+
+                    <!--
+                        Delete link จะเปิดหน้า confirmation ก่อน
+                        การกด link นี้ยังไม่ลบข้อมูลจริง
+                    -->
+                    <a href="{% url 'movie_delete' movie.id %}">Delete</a>
+                </p>
+
+
             </article>
 
             <hr>

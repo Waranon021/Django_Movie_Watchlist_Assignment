@@ -1,4 +1,4 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import MovieForm
 from .models import Movie
@@ -65,3 +65,77 @@ def movie_add(request):
     }
 
     return render(request, "movies/movie_form.html", context)
+
+
+def movie_edit(request, movie_id):
+    """
+    แก้ไข Movie ที่มีอยู่แล้วใน Watchlist
+
+    GET:
+        โหลดข้อมูล Movie เดิมมาแสดงใน form
+
+    POST:
+        รับข้อมูลที่แก้ไข ตรวจ validation
+        แล้ว update Movie object เดิมใน PostgreSQL
+    """
+
+    # ค้นหา Movie จาก primary key (id)
+    # ถ้าไม่พบ Django จะตอบกลับด้วย HTTP 404 แทนการเกิด server error
+    movie = get_object_or_404(Movie, pk=movie_id)
+
+    if request.method == "POST":
+        # ผูกข้อมูลจาก POST เข้ากับ Movie object เดิม
+        # instance=movie คือจุดที่ทำให้ form.save()
+        # แก้ไข row เดิมแทนการสร้าง Movie ใหม่
+        form = MovieForm(request.POST, instance=movie)
+
+        if form.is_valid():
+            form.save()
+
+            # เมื่อแก้ไขสำเร็จ กลับไปหน้า Movie Watchlist
+            return redirect("movie_list")
+
+    else:
+        # GET request ใช้ Movie object เดิมเป็น instance
+        # Django จึงเติมข้อมูลปัจจุบันลงใน form ให้อัตโนมัติ
+        form = MovieForm(instance=movie)
+
+    context = {
+        "form": form,
+        "movie": movie,
+    }
+
+    return render(request, "movies/movie_form.html", context)
+
+
+def movie_delete(request, movie_id):
+    """
+    ลบ Movie ออกจาก Watchlist
+
+    GET:
+        แสดงหน้า confirmation ก่อนลบ
+
+    POST:
+        ลบ Movie object ออกจาก PostgreSQL
+        แล้วกลับไปหน้า Movie Watchlist
+    """
+
+    # ค้นหา Movie จาก primary key
+    # ถ้าไม่มี Movie id นี้ Django จะตอบกลับด้วย HTTP 404
+    movie = get_object_or_404(Movie, pk=movie_id)
+
+    # การลบข้อมูลจริงจะเกิดเฉพาะ POST request
+    # เพื่อไม่ให้การเปิด URL ธรรมดาทำให้ข้อมูลถูกลบทันที
+    if request.method == "POST":
+        # delete() ลบ Movie object นี้ออกจาก database ผ่าน Django ORM
+        movie.delete()
+
+        # หลังลบสำเร็จ กลับไปหน้า Home
+        return redirect("movie_list")
+
+    # GET request จะแสดงหน้า confirmation ก่อน
+    context = {
+        "movie": movie,
+    }
+
+    return render(request, "movies/movie_confirm_delete.html", context)
