@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Search TMDB | Movie Watchlist</title>
+</head>
+
+<body>
+    <main>
+        <h1>Search TMDB</h1>
+
+        <p>
+            Search the TMDB movie catalog and add movies
+            to your personal watchlist.
+        </p>
+
+        <!--
+            TMDB Search ใช้ GET เพราะเป็นการอ่านข้อมูลจาก external API
+            และยังไม่ได้สร้างหรือแก้ไขข้อมูลใน PostgreSQL
+        -->
+        <form method="get">
+            <label for="tmdb-search">
+                Search movies:
+            </label>
+
+            <input
+                type="search"
+                id="tmdb-search"
+                name="q"
+                value="{{ query }}"
+                placeholder="Search TMDB..."
+            >
+
+            <button type="submit">
+                Search
+            </button>
+        </form>
+
+
+        <!--
+            แสดงข้อความทั่วไปเมื่อ Django backend
+            ไม่สามารถเรียก TMDB API ได้
+
+            error_message ถูกสร้างจาก service layer
+            และไม่ควรมี API token หรือข้อมูลลับ
+        -->
+        {% if error_message %}
+            <p>{{ error_message }}</p>
+        {% endif %}
+
+
+        <!--
+            แสดง Results เฉพาะเมื่อผู้ใช้กรอกคำค้น
+        -->
+        {% if query %}
+            <h2>
+                Results for "{{ query }}"
+            </h2>
+
+            <!--
+                results มาจาก TMDB API ผ่าน Django backend
+
+                Browser ได้รับเฉพาะข้อมูล Movie ที่ Django
+                ส่งมายัง Template และไม่ได้รับ TMDB API token
+            -->
+            {% for result in results %}
+                <article>
+                    <h3>{{ result.title }}</h3>
+
+                    {% if result.release_year %}
+                        <p>
+                            Release Year:
+                            {{ result.release_year }}
+                        </p>
+                    {% else %}
+                        <p>
+                            Release Year: Unknown
+                        </p>
+                    {% endif %}
+
+                    <!--
+                        คะแนนนี้เป็นคะแนนจาก TMDB
+                        ไม่ใช่ Personal Rating ของผู้ใช้
+                    -->
+                    <p>
+                        TMDB Rating:
+                        {{ result.vote_average }}/10
+                    </p>
+
+                    {% if result.overview %}
+                        <p>
+                            {{ result.overview }}
+                        </p>
+                    {% else %}
+                        <p>
+                            No overview available.
+                        </p>
+                    {% endif %}
+
+
+                    {% if result.already_added %}
+                        <!--
+                            Movie ที่มี TMDB ID นี้อยู่ใน
+                            Local PostgreSQL Watchlist แล้ว
+                        -->
+                        <p>
+                            Already in Watchlist
+                        </p>
+
+                    {% else %}
+                        <!--
+                            Add to Watchlist เปลี่ยนข้อมูลใน database
+
+                            จึงใช้ POST และ CSRF token
+                            แทนการใช้ link แบบ GET
+                        -->
+                        <form
+                            method="post"
+                            action="{% url 'tmdb_add_movie' result.id %}"
+                        >
+                            {% csrf_token %}
+
+                            <button type="submit">
+                                Add to Watchlist
+                            </button>
+                        </form>
+                    {% endif %}
+                </article>
+
+                <hr>
+
+            {% empty %}
+                <!--
+                    ทำงานเมื่อ TMDB Search สำเร็จ
+                    แต่ไม่มี Movie ที่ตรงกับคำค้น
+                -->
+                <p>
+                    No movies found on TMDB for "{{ query }}".
+                </p>
+            {% endfor %}
+        {% endif %}
+
+
+        <p>
+            <a href="{% url 'movie_list' %}">
+                Back to Movie Watchlist
+            </a>
+        </p>
+    </main>
+</body>
+</html>

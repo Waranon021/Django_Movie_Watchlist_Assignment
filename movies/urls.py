@@ -33,4 +33,20 @@ urlpatterns = [
         views.movie_toggle_watched,
         name="movie_toggle_watched",
     ),
+
+        # Search Movie จาก external TMDB catalog
+    # Search เป็นการอ่านข้อมูลจึงใช้ GET
+    path(
+        "movies/tmdb/search/",
+        views.tmdb_search,
+        name="tmdb_search",
+    ),
+
+    # เพิ่ม Movie ที่เลือกจาก TMDB ลง Local Watchlist
+    # View จำกัดให้รับเฉพาะ POST ด้วย @require_POST
+    path(
+        "movies/tmdb/<int:tmdb_id>/add/",
+        views.tmdb_add_movie,
+        name="tmdb_add_movie",
+    ),
 ]

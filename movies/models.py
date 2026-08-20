@@ -46,6 +46,31 @@ class Movie(models.Model):
     # field นี้จะใช้เรียงหนังแบบ newest first ใน Checkpoint 3
     date_added = models.DateTimeField(auto_now_add=True)
 
+
+    # TMDB ID ใช้เชื่อม Movie ใน Local Watchlist
+    # กับ Movie record ของ TMDB
+    #
+    # null=True และ blank=True เพราะหนังที่เพิ่มด้วย Manual Add
+    # ไม่จำเป็นต้องมาจาก TMDB
+    #
+    # unique=True ช่วยป้องกัน TMDB Movie เดียวกัน
+    # ถูก import เข้ามาซ้ำด้วย TMDB ID เดิม
+    tmdb_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        unique=True,
+    )
+
+    # เก็บเฉพาะ poster path ที่ TMDB ส่งกลับมา
+    # ตัวอย่างแนวรูปแบบ: /abc123.jpg
+    #
+    # ยังไม่สร้าง URL ของรูปใน Checkpoint นี้
+    # Checkpoint 10 จะนำ path นี้ไปใช้กับ Poster UI
+    poster_path = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
     def __str__(self):
         """
         กำหนดข้อความที่ใช้แทน Movie object

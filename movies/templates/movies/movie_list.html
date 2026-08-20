@@ -36,7 +36,19 @@
             Django จะหา URL จาก name="movie_add"
         -->
         <p>
-            <a href="{% url 'movie_add' %}">Add Movie</a>
+            <!--
+                Add Movie คือ Manual CRUD ตาม Assignment
+
+                Search TMDB คือ additional feature
+                สำหรับค้น Movie จริงจาก TMDB แล้วเพิ่มเข้า Watchlist
+            -->
+            <a href="{% url 'movie_add' %}">
+                Add Movie
+            </a>
+
+            <a href="{% url 'tmdb_search' %}">
+                Search TMDB
+            </a>
         </p>
 
 

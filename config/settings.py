@@ -159,3 +159,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+
+# TMDB API ============================================================
+
+# API Read Access Token เป็น secret
+# ค่าจริงถูกเก็บไว้ใน .env เท่านั้น และห้าม hard-code ใน source code
+
+# ใช้ string ว่างเป็นค่าเริ่มต้น เพราะ TMDB เป็น additional feature
+# Core Movie CRUD ยังสามารถทำงานได้แม้ environment ไม่มี TMDB token
+TMDB_API_TOKEN = os.environ.get("TMDB_API_TOKEN", "")
+
+# Base URL ของ TMDB API เป็น public configuration
+# ไม่ใช่ secret จึงสามารถกำหนดไว้ใน settings.py ได้
+TMDB_API_BASE_URL = "https://api.themoviedb.org/3"

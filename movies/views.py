@@ -3,6 +3,11 @@ from django.views.decorators.http import require_POST
 
 from .forms import MovieForm
 from .models import Movie
+from .services.tmdb import (
+    TMDBServiceError,
+    get_movie_details,
+    search_movies,
+)
 
 
 def movie_list(request):
@@ -199,4 +204,179 @@ def movie_toggle_watched(request, movie_id):
     movie.save(update_fields=["watched"])
 
     # เมื่อเปลี่ยนสถานะสำเร็จ กลับไปหน้า Movie Watchlist
+    return redirect("movie_list")
+
+
+def tmdb_search(request):
+    """
+    ค้น Movie จาก TMDB API
+
+    Search นี้แยกจาก Local Watchlist Search:
+    - Local Search ค้น Movie ที่อยู่ใน PostgreSQL ของเรา
+    - TMDB Search ค้น Movie จาก external TMDB catalog
+    """
+
+    # รับคำค้นจาก query parameter ชื่อ q
+    # ตัวอย่าง URL:
+    # /movies/tmdb/search/?q=dune
+    query = request.GET.get("q", "").strip()
+
+    # ค่าเริ่มต้นเป็น list ว่าง
+    # ถ้ายังไม่ได้ Search หน้า template จะยังไม่มี results
+    results = []
+
+    # เก็บข้อความ error แบบทั่วไป
+    # ไม่ส่งรายละเอียด request หรือ API token ไปยัง browser
+    error_message = ""
+
+    # เรียก TMDB เฉพาะเมื่อผู้ใช้กรอกคำค้นจริง
+    if query:
+        try:
+            # ใช้ service layer ที่สร้างไว้ใน 9.6
+            #
+            # จำกัด 10 รายการแรกเพื่อให้หน้า Search
+            # ไม่ยาวเกินไปสำหรับ Assignment
+            results = search_movies(query)[:10]
+
+        except TMDBServiceError as exc:
+            # Service เปลี่ยน external API errors
+            # เป็นข้อความที่ปลอดภัยสำหรับ application แล้ว
+            error_message = str(exc)
+
+    # ดึงเฉพาะ TMDB IDs ของ Movie
+    # ที่ถูก import เข้า Local Watchlist แล้ว
+    existing_tmdb_ids = set(
+        Movie.objects.exclude(
+            tmdb_id__isnull=True
+        ).values_list(
+            "tmdb_id",
+            flat=True,
+        )
+    )
+
+    # เตรียมข้อมูลเพิ่มเติมสำหรับ template
+    for result in results:
+        # TMDB ส่ง release_date ในรูปแบบ YYYY-MM-DD
+        # แต่หน้า Search ของเราต้องการแสดงเพียงปี
+        release_date = result.get("release_date") or ""
+
+        if len(release_date) >= 4:
+            result["release_year"] = release_date[:4]
+        else:
+            result["release_year"] = ""
+
+        # เช็กว่า TMDB Movie เรื่องนี้มีอยู่ใน Watchlist แล้วหรือยัง
+        # ถ้ามีแล้ว Template จะแสดง Already in Watchlist
+        result["already_added"] = (
+            result.get("id") in existing_tmdb_ids
+        )
+
+    context = {
+        "query": query,
+        "results": results,
+        "error_message": error_message,
+    }
+
+    return render(
+        request,
+        "movies/tmdb_search.html",
+        context,
+    )
+
+
+@require_POST
+def tmdb_add_movie(request, tmdb_id):
+    """
+    เพิ่ม Movie จาก TMDB ลง Local Watchlist
+
+    Browser ส่งมาเฉพาะ TMDB ID
+    จากนั้น Django backend จะดึงรายละเอียดจาก TMDB อีกครั้ง
+    ก่อนบันทึกข้อมูลลง PostgreSQL
+    """
+
+    try:
+        # ไม่เชื่อ title / year / genre ที่ browser ส่งกลับมา
+        # Django ใช้ TMDB ID ไปขอข้อมูลจริงจาก TMDB server-side อีกครั้ง
+        details = get_movie_details(tmdb_id)
+
+    except TMDBServiceError as exc:
+        # ถ้า TMDB API มีปัญหา ให้แสดง error แบบทั่วไป
+        # โดยไม่เปิดเผย API token หรือ request internals
+        context = {
+            "query": "",
+            "results": [],
+            "error_message": str(exc),
+        }
+
+        return render(
+            request,
+            "movies/tmdb_search.html",
+            context,
+            status=502,
+        )
+
+    # TMDB บางรายการอาจไม่มี release_date
+    release_date = details.get("release_date") or ""
+
+    # แปลงเฉพาะ YYYY ให้เป็น integer
+    # ถ้าไม่มีปีหรือข้อมูลผิดรูปแบบให้เก็บเป็น None
+    if (
+        len(release_date) >= 4
+        and release_date[:4].isdigit()
+    ):
+        release_year = int(release_date[:4])
+    else:
+        release_year = None
+
+    # TMDB Movie Details ส่ง genres เป็น list ของ dictionaries
+    # เช่น:
+    # [{"id": 18, "name": "Drama"}, ...]
+    genre_names = [
+        genre["name"]
+        for genre in details.get("genres", [])
+        if genre.get("name")
+    ]
+
+    # Movie.genre ของเรา max_length=100
+    # จึงรวมชื่อ Genre แล้วจำกัดความยาวก่อนบันทึก
+    genre_text = ", ".join(genre_names)[:100]
+
+    # ค้น Movie ด้วย TMDB ID ก่อน
+    # ถ้ายังไม่มีจึงสร้างใหม่
+    #
+    # tmdb_id มี unique=True ใน Model
+    # ช่วยป้องกัน TMDB Movie เดียวกันถูกเพิ่มซ้ำ
+    movie, created = Movie.objects.get_or_create(
+        tmdb_id=tmdb_id,
+        defaults={
+            # ใช้ title จาก TMDB
+            # และป้องกันข้อความยาวเกิน max_length=255
+            "title": (
+                details.get("title")
+                or details.get("original_title")
+                or "Untitled"
+            )[:255],
+
+            "genre": genre_text,
+            "release_year": release_year,
+
+            # ไม่ใช้คะแนน TMDB เป็น Personal Rating
+            # เพราะ Personal Rating เป็นคะแนนของผู้ใช้เอง
+            "personal_rating": None,
+
+            # Movie ที่ import ใหม่เริ่มต้นใน PLAN TO WATCH
+            "watched": False,
+
+            # เก็บ poster path ไว้ใช้ใน Checkpoint 10
+            "poster_path": details.get("poster_path") or "",
+        },
+    )
+
+    # created จะเป็น:
+    # True  = เพิ่งสร้าง Movie ใหม่
+    # False = Movie นี้มีอยู่แล้ว
+    #
+    # ตอนนี้ยังไม่ต้องใช้ตัวแปรนี้แสดง notification
+    # แต่เก็บไว้เพื่อให้เห็น behavior ของ get_or_create()
+
     return redirect("movie_list")
