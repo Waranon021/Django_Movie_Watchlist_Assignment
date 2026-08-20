@@ -1,0 +1,363 @@
+{% extends "movies/base.html" %}
+
+{% load static %}
+
+
+{% block title %}
+    About | Movie Watchlist
+{% endblock %}
+
+
+
+{% block content %}
+
+<!--
+    1. About Introduction
+
+    หน้า About อธิบายจุดประสงค์ของ project
+    และ technologies ที่ใช้พัฒนา application
+
+    หน้านี้ไม่มีการแก้ PostgreSQL
+    และไม่มี external API request
+-->
+<section class="subpage-hero">
+
+    <h1>
+        ABOUT
+    </h1>
+
+</section>
+
+
+
+<!--
+    2. Project Overview
+
+    อธิบาย functionality หลักจาก Assignment
+    และ additional features ที่เพิ่มเข้ามา
+-->
+<section class="about-section">
+
+    <h2>
+        [ What does this project do? ]
+    </h2>
+
+    <p class="about-text">
+        Movie Watchlist allows users to add, edit, delete, search,
+        and organize movies into Plan to Watch and Watched sections.
+        Movies can be entered manually or imported from TMDB with
+        movie metadata and poster images.
+    </p>
+
+</section>
+
+
+
+<!--
+    3. Features
+
+    แสดงทั้ง Assignment functionality
+    และ additional functionality ของ project
+-->
+<section class="about-section">
+
+    <h2>
+        [ Main features ]
+    </h2>
+
+
+    <div class="about-grid">
+
+        <article class="info-card">
+
+            <p class="info-card-number">
+
+            <h3>
+               Watchlist Management
+            </h3>
+
+            <p>
+                Add, edit, delete, search, and organize movies
+                stored in PostgreSQL using the Django ORM.
+            </p>
+
+        </article>
+
+
+        <article class="info-card">
+
+            <p class="info-card-number">
+
+            <h3>
+                Watched Status
+            </h3>
+
+            <p>
+                Move movies between Plan to Watch and Watched
+                without creating duplicate Movie records.
+            </p>
+
+        </article>
+
+
+        <article class="info-card">
+
+            <p class="info-card-number">
+
+            <h3>
+                Personal Rating
+            </h3>
+
+            <p>
+                Rate watched movies from 1 to 5 directly
+                from the Movie Watchlist interface.
+            </p>
+
+        </article>
+
+
+        <article class="info-card">
+
+            <p class="info-card-number">
+
+            <h3>
+                TMDB Integration
+            </h3>
+
+            <p>
+                Search the TMDB catalog and import movie titles,
+                release years, genres, and poster information.
+            </p>
+
+        </article>
+
+    </div>
+
+</section>
+
+
+
+<!--
+    4. Technology Stack
+
+    ระบุเฉพาะ technologies ที่ project ใช้จริง
+
+    Bootstrap ไม่ได้อยู่ในรายการ
+    เพราะ UI ของ project ใช้ Custom CSS
+    ไม่ได้ใช้ Bootstrap framework
+-->
+<section class="about-section">
+
+    <h2>
+        [ Technology stack ]
+    </h2>
+
+
+    <div class="technology-grid">
+
+        <article class="technology-item">
+
+            <span class="technology-label">
+                - BACKEND:
+            </span>
+
+            <strong>
+                Python / Django
+            </strong>
+
+        </article>
+
+
+        <article class="technology-item">
+
+            <span class="technology-label">
+               - DATABASE:
+            </span>
+
+            <strong>
+                PostgreSQL
+            </strong>
+
+        </article>
+
+
+        <article class="technology-item">
+
+            <span class="technology-label">
+               - DATABASE ACCESS:
+            </span>
+
+            <strong>
+                Django ORM
+            </strong>
+
+        </article>
+
+
+        <article class="technology-item">
+
+            <span class="technology-label">
+                - FRONTEND:
+            </span>
+
+            <strong>
+                HTML5 / Custom CSS
+            </strong>
+
+        </article>
+
+
+        <article class="technology-item">
+
+            <span class="technology-label">
+                - INTERACTION:
+            </span>
+
+            <strong>
+                Vanilla JavaScript
+            </strong>
+
+        </article>
+
+
+        <article class="technology-item">
+
+            <span class="technology-label">
+                - HTTP CLIENT:
+            </span>
+
+            <strong>
+                Requests
+            </strong>
+
+        </article>
+
+
+        <article class="technology-item">
+
+            <span class="technology-label">
+                - EXTERNAL API:
+            </span>
+
+            <strong>
+                TMDB API
+            </strong>
+
+        </article>
+
+
+        <article class="technology-item">
+
+            <span class="technology-label">
+                - VERSION CONTROL:
+            </span>
+
+            <strong>
+                Git / GitHub
+            </strong>
+
+        </article>
+
+    </div>
+
+</section>
+
+
+
+<!--
+    5. TMDB Attribution
+
+    TMDB กำหนดให้ application ที่ใช้ API:
+        - แสดง approved TMDB logo
+        - มี attribution notice
+        - Attribution อยู่ใน About/Credits section
+
+    Logo ถูกเก็บเป็น Django static file
+    และไม่ได้แก้สีหรือ aspect ratio
+-->
+<section class="about-section tmdb-attribution">
+
+    <h2>
+        [ API data source ]
+    </h2>
+
+
+    <a
+        class="tmdb-logo-link"
+        href="https://www.themoviedb.org/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Visit The Movie Database"
+    >
+
+        <img
+            class="tmdb-logo"
+            src="{% static 'movies/images/tmdb-logo.svg' %}"
+            alt="The Movie Database logo"
+        >
+
+    </a>
+
+
+    <p class="about-text">
+        Movie information and poster images used by the external
+        movie search feature are retrieved using The Movie Database
+        (TMDB) API.
+    </p>
+
+
+    <!--
+        TMDB กำหนด attribution notice นี้โดยตรง
+        จึงคงข้อความตาม requirement ของ TMDB
+    -->
+    <p class="tmdb-notice">
+        This product uses the TMDB API for learning purposes only.
+    </p>
+
+
+    <a
+        class="text-link"
+        href="https://www.themoviedb.org/"
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        Visit The Movie Database →
+    </a>
+
+</section>
+
+
+
+<!--
+    6. AI Disclosure
+
+    Assignment กำหนดให้ external resources
+    และ AI assistance ถูก acknowledge
+
+    Disclosure อธิบายขอบเขตการใช้ AI
+    โดยยังระบุว่า code และ suggestions ถูก review และ test
+    ระหว่างการพัฒนา project
+-->
+<section class="about-section">
+
+    <h2>
+        [ AI-assisted development ]
+    </h2>
+
+
+    <p class="about-text">
+        ChatGPT was used as a development and learning assistant
+        for project planning, explanations of Django and Python
+        concepts, code drafting, debugging guidance, security review,
+        and user-interface planning.
+    </p>
+
+
+    <p class="about-text">
+        AI-generated suggestions were reviewed, adapted, and tested
+        during the development of this coursework project.
+    </p>
+
+</section>
+
+{% endblock %}

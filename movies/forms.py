@@ -7,21 +7,46 @@ class MovieForm(forms.ModelForm):
     """
     Form สำหรับเพิ่มและแก้ไขข้อมูล Movie
 
-    ModelForm เชื่อมกับ Movie model โดยตรง
-    ทำให้ Django สามารถสร้าง form fields และตรวจ validation
-    จาก field definitions ใน models.py ได้
+    Form นี้ใช้ร่วมกันโดย:
+        - movie_add()
+        - movie_edit()
+
+    Personal Rating ไม่อยู่ใน Form นี้แล้ว
+    เพราะ Checkpoint 10 ย้ายการให้คะแนน
+    ไปเป็น Inline Rating บน WATCHED Movie Card
+
+    การแยก Rating ออกจาก Form ช่วยให้ UI สื่อกฎได้ชัดเจนว่า:
+        - Movie ที่ยังไม่ได้ดู ไม่ควรให้คะแนน
+        - Movie ที่ดูแล้วสามารถให้คะแนน 1–5 ได้จากหน้า Home
+
+    Movie model ยังมี personal_rating field เหมือนเดิม
+    และข้อมูลยังถูกเก็บใน PostgreSQL ตามปกติ
     """
 
     class Meta:
-        # ระบุว่า form นี้ทำงานกับ Movie model
         model = Movie
 
-        # ระบุ field ที่อนุญาตให้ผู้ใช้กรอกผ่าน form
-        # date_added ไม่อยู่ในนี้ เพราะ Django สร้างให้อัตโนมัติ
+        # title, genre และ release_year เป็นข้อมูลหลักของ Movie
+        # watched ยังคงอยู่ใน Form
+        # เพื่อให้ Manual Add/Edit สามารถระบุได้ว่า
+        # Movie นี้เคยดูแล้วหรือยัง
+        # personal_rating ถูกย้ายไปจัดการด้วย movie_rate()
         fields = [
             "title",
             "genre",
             "release_year",
-            "personal_rating",
             "watched",
         ]
+
+        # เปลี่ยนข้อความของ watched checkbox
+        # ให้ผู้ใช้เข้าใจง่ายกว่าการเห็นชื่อ Boolean field ตรง ๆ
+        labels = {
+            "watched": "Already watched",
+        }
+
+        help_texts = {
+            "watched": (
+                "Check this if you have already watched the movie. "
+                "You can rate watched movies from the watchlist."
+            ),
+        }

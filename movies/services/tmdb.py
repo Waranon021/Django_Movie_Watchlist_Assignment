@@ -30,7 +30,6 @@ def _tmdb_get(path, params=None):
 
     # API Read Access Token ถูกส่งจาก Django backend
     # ไปยัง TMDB ผ่าน Authorization header
-    #
     # Token นี้จะไม่ถูกส่งไปยัง HTML template หรือ browser
     headers = {
         "Authorization": f"Bearer {settings.TMDB_API_TOKEN}",
@@ -55,9 +54,7 @@ def _tmdb_get(path, params=None):
         return response.json()
 
     except (requests.RequestException, ValueError) as exc:
-        # ไม่ส่งรายละเอียดของ request, header หรือ token
-        # กลับไปยัง browser โดยตรง
-        #
+        # ไม่ส่งรายละเอียดของ request, header หรือ token กลับไปยัง browser โดยตรง
         # from exc เก็บ original exception ไว้สำหรับ debugging
         # แต่ข้อความที่ application ใช้จะเป็นข้อความทั่วไป
         raise TMDBServiceError(
@@ -100,3 +97,44 @@ def get_movie_details(tmdb_id):
             "language": "en-US",
         },
     )
+
+
+def get_movie_genres():
+    """
+    ดึงรายการ Genre สำหรับ Movie จาก TMDB
+
+    TMDB Search Movie ส่ง Genre กลับมาเป็น genre_ids
+    เช่น:
+        [28, 878]
+
+    แต่หน้า Search ของเราต้องการแสดงชื่อ Genre เช่น:
+        Action, Science Fiction
+
+    function นี้จึงเรียก TMDB Genre endpoint
+    แล้วสร้าง dictionary สำหรับ map Genre ID → Genre Name
+
+    ตัวอย่างผลลัพธ์:
+        {
+            28: "Action",
+            878: "Science Fiction",
+        }
+
+    การใช้ Genre endpoint แยกดีกว่าการเรียก Movie Details
+    เพิ่มอีกหนึ่งครั้งสำหรับ Movie ทุกเรื่องใน Search Results
+    """
+
+    data = _tmdb_get(
+        "/genre/movie/list",
+        params={
+            "language": "en-US",
+        },
+    )
+
+    # TMDB ส่ง genres มาเป็น list ของ dictionaries
+    # ตัวอย่าง: [{"id": 28, "name": "Action"}, ...]
+    # เราเปลี่ยนเป็น dictionary ที่ค้นหาด้วย ID ได้ง่ายกว่า
+    return {
+        genre["id"]: genre["name"]
+        for genre in data.get("genres", [])
+        if genre.get("id") and genre.get("name")
+    }

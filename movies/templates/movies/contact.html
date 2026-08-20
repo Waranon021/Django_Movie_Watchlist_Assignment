@@ -1,0 +1,110 @@
+{% extends "movies/base.html" %}
+
+
+{% block title %}
+    Contact | Movie Watchlist
+{% endblock %}
+
+
+
+{% block content %}
+
+<!--
+    1. Contact Introduction
+
+    หน้านี้รวบรวมช่องทางติดต่อ
+    และ GitHub repository ของ project
+
+    ไม่มี Form และไม่เก็บข้อมูลผู้เข้าชม
+    ลง PostgreSQL
+-->
+<section class="subpage-hero">
+
+    <h1>
+        Get in touch
+    </h1>
+
+    <p class="hero-description">
+        Contact information and project repository.
+    </p>
+
+</section>
+
+
+
+<!--
+    2. Contact Cards
+
+    ใช้ mailto: สำหรับ Email
+    เพื่อให้ browser เปิด Email application
+    ที่ผู้ใช้ตั้งไว้เป็น default
+-->
+<section class="contact-grid">
+
+    <article class="contact-card">
+
+        <h2>
+            AIT Student Email
+        </h2>
+
+        <p>
+            For academic and university-related communication.
+        </p>
+
+        <a
+            class="contact-link"
+            href="mailto:st125934@ait.ac.th"
+        >
+            st125934@ait.ac.th
+        </a>
+
+    </article>
+
+
+
+    <article class="contact-card">
+
+        <h2>
+            Personal Email
+        </h2>
+
+        <p>
+            For general and personal contact.
+        </p>
+
+        <a
+            class="contact-link"
+            href="mailto:waranon-021@outlook.co.th"
+        >
+            waranon-021@outlook.co.th
+        </a>
+
+    </article>
+
+
+
+    <article class="contact-card">
+
+        <h2>
+            GitHub source code
+        </h2>
+
+        <p>
+            View the source code and project history
+            for this Movie Watchlist application.
+        </p>
+
+        <a
+            class="contact-link"
+            href="https://github.com/Waranon021/Django_Movie_Watchlist_Assignment"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Django Movie Watchlist Assignment →
+        </a>
+
+    </article>
+
+</section>
+
+{% endblock %}

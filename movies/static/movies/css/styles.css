@@ -1865,3 +1865,601 @@ h3 {
         animation-duration: 0.01ms !important;
     }
 }
+
+
+/*
+ * 23. Checkpoint 10 Polish - Hero
+ *
+ * TMDB เป็น Primary Add flow ของ UI
+ * และ Hero description ต้องอยู่บรรทัดเดียวบน Desktop
+ *
+ * white-space: nowrap ใช้เฉพาะหน้าจอที่มีพื้นที่เพียงพอ
+ * และจะถูกยกเลิกใน Responsive rule ด้านล่าง
+ */
+
+.hero-copy {
+    max-width: none;
+    flex: 1;
+}
+
+
+.hero-description {
+    max-width: none;
+}
+
+
+@media (min-width: 1051px) {
+
+    .hero-section .hero-description {
+        white-space: nowrap;
+    }
+}
+
+
+
+/*
+ * 24. TMDB Genre
+ *
+ * Genre เป็นข้อมูลรองระหว่าง Metadata
+ * และ Overview จึงใช้ขนาดเล็กกว่า Movie Title
+ */
+
+.tmdb-genres {
+    margin:
+        10px
+        0
+        0;
+
+    color: var(--color-primary);
+
+    font-size: 0.78rem;
+    font-weight: 600;
+
+    line-height: 1.45;
+}
+
+
+
+/*
+ * 25. TMDB Add Actions
+ *
+ * Search Result มีสอง destination:
+ *
+ * Plan to Watch
+ *     watched=False
+ *
+ * Watched
+ *     watched=True
+ *
+ * แยกเป็นสอง buttons เพื่อให้สถานะของ Movie
+ * ถูกกำหนดตั้งแต่ตอน Import
+ */
+
+.tmdb-add-actions {
+    margin-top: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: var(--space-1);
+}
+
+
+.tmdb-add-actions form {
+    margin: 0;
+}
+
+
+.button-add-watched {
+    border-color:
+        rgba(134, 239, 172, 0.30);
+
+    background:
+        rgba(134, 239, 172, 0.10);
+
+    color: var(--color-success);
+}
+
+
+.button-add-watched:hover {
+    border-color: var(--color-success);
+
+    background:
+        rgba(134, 239, 172, 0.16);
+}
+
+
+
+/*
+ /*
+ * 26. Inline Personal Rating
+ *
+ * Rating controls แสดงเฉพาะ Movie
+ * ที่อยู่ใน WATCHED section
+ *
+ * ดาวแต่ละดวงเป็น HTML submit button
+ * แต่ถูกออกแบบให้ดูเหมือน Star Rating
+ *
+ * การบันทึกคะแนนยังใช้ POST form ตามเดิม
+ * จึงไม่จำเป็นต้องใช้ JavaScript
+ */
+
+.rating-block-watched {
+    display: block;
+}
+
+
+.rating-heading {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: var(--space-1);
+}
+
+
+/*
+ * จัดดาวและ Clear button
+ * ให้อยู่ในแถวเดียวกันเมื่อมีพื้นที่เพียงพอ
+ *
+ * flex-wrap ช่วยให้ Responsive
+ * ถ้า Movie Card มีพื้นที่แคบ
+ */
+.rating-form {
+    margin-top: 10px;
+
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 3px;
+}
+
+
+/*
+ * Rating Star
+ *
+ * ดาวไม่ได้ใช้ background หรือกรอบแบบ button ทั่วไป
+ * เพื่อให้หน้าตาใกล้กับระบบ Rating มากกว่า Form buttons
+ *
+ * สีเหลือง/ส้มอิงกับ Accent color
+ * ที่ใช้กับ Personal Rating อยู่แล้ว
+ */
+.rating-star {
+    padding: 0;
+
+    border: 0;
+
+    cursor: pointer;
+
+    background: transparent;
+
+    color: #facc15;
+
+    font-size: 1.55rem;
+    line-height: 1;
+
+    transition:
+        color 140ms ease,
+        transform 140ms ease,
+        text-shadow 140ms ease;
+}
+
+
+/*
+ * เมื่อเอา mouse ไปวางบนดาว
+ * ให้ขยายเล็กน้อยเพื่อสื่อว่า Click ได้
+ */
+.rating-star:hover {
+    transform: scale(1.18);
+
+    color: #fde047;
+
+    text-shadow:
+        0
+        0
+        8px rgba(250, 204, 21, 0.32);
+}
+
+
+/*
+ * keyboard focus ยังต้องเห็นได้
+ * เพื่อรองรับ accessibility
+ */
+.rating-star:focus-visible {
+    outline:
+        2px solid var(--color-primary);
+
+    outline-offset: 3px;
+
+    border-radius: 4px;
+}
+
+
+/*
+ * Clear Rating
+ *
+ * เปลี่ยนจาก text link ธรรมดา
+ * ให้เป็นปุ่มสีม่วงขนาดเล็ก
+ *
+ * ยังส่ง rating="clear"
+ * ไปยัง movie_rate() เหมือนเดิม
+ */
+.rating-clear {
+    min-height: 30px;
+
+    margin-left: 7px;
+
+    padding:
+        5px
+        10px;
+
+    border:
+        1px solid rgba(192, 132, 252, 0.45);
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    background:
+        rgba(192, 132, 252, 0.13);
+
+    color: #e9d5ff;
+
+    font-size: 0.72rem;
+    font-weight: 600;
+
+    transition:
+        background 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease,
+        transform 150ms ease;
+}
+
+
+.rating-clear:hover {
+    transform: translateY(-1px);
+
+    border-color: var(--color-primary);
+
+    background: var(--color-primary);
+
+    color: #13061e;
+}
+
+
+
+/*
+ * 27. About Page
+ *
+ * About ใช้ section rhythm เดียวกับ Home
+ * แต่ไม่ใช้ Movie Cards เพื่อรักษา hierarchy
+ * ระหว่าง informational content กับ Movie content
+ */
+
+.about-description {
+    max-width: 760px;
+}
+
+
+.about-section {
+    max-width: 1040px;
+
+    margin-bottom: var(--space-section);
+}
+
+
+.about-section h2 {
+    margin-bottom: var(--space-3);
+}
+
+
+.about-text {
+    max-width: 780px;
+
+    color: var(--color-text-secondary);
+
+    font-size: 0.96rem;
+
+    line-height: 1.8;
+}
+
+
+.about-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: var(--space-2);
+}
+
+
+.info-card {
+    padding: var(--space-3);
+
+    border: 1px solid var(--color-border);
+
+    border-radius: var(--radius-card);
+
+    background:
+        rgba(24, 24, 27, 0.66);
+}
+
+
+.info-card-number {
+    margin-bottom: var(--space-3);
+
+    color: var(--color-primary);
+
+    font-family:
+        "JetBrains Mono",
+        ui-monospace,
+        Consolas,
+        monospace;
+
+    font-size: 0.74rem;
+}
+
+
+.info-card h3 {
+    margin-bottom: 8px;
+}
+
+
+.info-card p:last-child {
+    margin-bottom: 0;
+
+    color: var(--color-text-secondary);
+}
+
+
+
+/*
+ * 28. Technology Stack
+ *
+ * Technology items มีลักษณะเป็น compact rows
+ * เพื่อไม่แย่ง visual attention จาก Project Features
+ */
+
+.technology-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: var(--space-1);
+}
+
+
+.technology-item {
+    padding:
+        16px
+        18px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: var(--space-2);
+
+    border-bottom:
+        1px solid var(--color-border);
+}
+
+
+.technology-label {
+    color: var(--color-text-muted);
+
+    font-size: 0.68rem;
+    font-weight: 700;
+
+    letter-spacing: 0.1em;
+}
+
+
+
+/*
+ * 29. TMDB Attribution
+ *
+ * Logo มีขนาดจำกัด
+ * เพื่อให้ TMDB branding ไม่เด่นกว่า Movie Watchlist
+ *
+ * ไม่กำหนด height และ width พร้อมกัน
+ * เพื่อรักษา original aspect ratio ของ SVG
+ */
+
+.tmdb-attribution {
+    padding: var(--space-4);
+
+    border: 1px solid var(--color-border);
+
+    border-radius: var(--radius-card);
+
+    background:
+        rgba(24, 24, 27, 0.60);
+}
+
+
+.tmdb-logo-link {
+    display: inline-block;
+
+    margin-bottom: var(--space-3);
+}
+
+
+.tmdb-logo {
+    width: 120px;
+
+    height: auto;
+}
+
+
+.tmdb-notice {
+    max-width: 720px;
+
+    margin:
+        var(--space-3)
+        0;
+
+    padding-left: var(--space-2);
+
+    border-left:
+        2px solid var(--color-primary);
+
+    color: var(--color-text-secondary);
+
+    font-size: 0.9rem;
+}
+
+
+.text-link {
+    color: var(--color-primary);
+
+    font-weight: 600;
+
+    text-decoration: none;
+}
+
+
+.text-link:hover {
+    text-decoration: underline;
+}
+
+
+
+/*
+ * 30. Contact Page
+ *
+ * Contact ใช้สาม Cards:
+ * - Student Email
+ * - Personal Email
+ * - GitHub
+ */
+
+.contact-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: var(--space-2);
+}
+
+
+.contact-card {
+    min-height: 250px;
+
+    padding: var(--space-3);
+
+    display: flex;
+    flex-direction: column;
+
+    border: 1px solid var(--color-border);
+
+    border-radius: var(--radius-card);
+
+    background:
+        rgba(24, 24, 27, 0.66);
+
+    transition:
+        border-color 180ms ease,
+        transform 180ms ease;
+}
+
+
+.contact-card:hover {
+    transform: translateY(-2px);
+
+    border-color: var(--color-border-light);
+}
+
+
+.contact-card h2 {
+    font-size: 1.5rem;
+}
+
+
+.contact-card p:not(.section-kicker) {
+    color: var(--color-text-secondary);
+}
+
+
+.contact-link {
+    margin-top: auto;
+
+    color: var(--color-primary);
+
+    font-weight: 600;
+
+    text-decoration: none;
+
+    overflow-wrap: anywhere;
+}
+
+
+.contact-link:hover {
+    text-decoration: underline;
+}
+
+
+
+/*
+ * 31. Responsive Rules สำหรับ Sections ใหม่
+ */
+
+@media (max-width: 1050px) {
+
+    /*
+     * Hero description กลับมา wrap ตามพื้นที่
+     * เพื่อป้องกันข้อความล้นหน้าจอ
+     */
+    .hero-section .hero-description {
+        white-space: normal;
+    }
+
+
+    .contact-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 760px) {
+
+    .about-grid,
+    .technology-grid,
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .technology-item {
+        align-items: flex-start;
+        flex-direction: column;
+
+        gap: 4px;
+    }
+
+
+    .tmdb-attribution {
+        padding: var(--space-3);
+    }
+}
+
+
+@media (max-width: 500px) {
+
+    .rating-button {
+        width: 29px;
+        height: 29px;
+    }
+
+
+    .tmdb-logo {
+        width: 100px;
+    }
+}

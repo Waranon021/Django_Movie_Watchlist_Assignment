@@ -1,5 +1,6 @@
 {% extends "movies/base.html" %}
 
+
 {% block title %}
     Search TMDB | Movie Watchlist
 {% endblock %}
@@ -11,17 +12,22 @@
     1. TMDB Search Introduction
 
     หน้านี้ใช้ค้น Movie จาก external TMDB catalog
-    ซึ่งแตกต่างจาก Search บนหน้า Home
 
-    Home Search:
-        ค้นเฉพาะ Movie ที่อยู่ใน PostgreSQL ของ application แล้ว
+    แตกต่างจาก Local Search บนหน้า Home:
+
+    Local Search:
+        ค้นเฉพาะ Movie ที่ถูกบันทึก
+        อยู่ใน PostgreSQL แล้ว
 
     TMDB Search:
-        ส่งคำค้นไปยัง Django View
-        จากนั้น Django backend เรียก TMDB API ผ่าน service layer
+        ค้น Movie จาก TMDB API
+        แล้วให้ผู้ใช้เลือกว่าจะเพิ่มเป็น:
+            - Plan to Watch
+            - Watched
 
-    Browser จึงไม่จำเป็นต้องรู้ API Read Access Token
-    และ token จะไม่ถูกใส่ไว้ใน HTML หรือ JavaScript
+    Browser ไม่ได้รับ TMDB API Token
+    เพราะ Django backend เป็นผู้เรียก API
+    ผ่าน movies/services/tmdb.py
 -->
 <section class="subpage-hero">
 
@@ -34,8 +40,7 @@
     </h1>
 
     <p class="hero-description">
-        Search the TMDB movie catalog and add selected movies
-        to your local watchlist.
+        Search the TMDB movie catalog and add movies to your watchlist.
     </p>
 
 </section>
@@ -45,13 +50,14 @@
 <!--
     2. TMDB Search Form
 
-    Form นี้ใช้ GET เพราะการ Search เป็น read-only operation
+    Search เป็น read-only operation
+    จึงใช้ GET
 
-    ตัวอย่างเมื่อค้นคำว่า Dune:
-        /movies/tmdb/search/?q=Dune
+    ตัวอย่าง:
+        /movies/tmdb/search/?q=Edge+of+Tomorrow
 
-    tmdb_search() View จะอ่านค่า q
-    แล้วส่งต่อให้ search_movies() ใน TMDB service layer
+    tmdb_search() View จะอ่าน query จาก:
+        request.GET.get("q", "")
 -->
 <section class="search-panel">
 
@@ -60,12 +66,6 @@
         method="get"
     >
 
-        <!--
-            label ยังคงอยู่เพื่อ accessibility
-
-            sr-only จะซ่อนเฉพาะทาง visual
-            แต่ screen reader ยังสามารถอ่านได้
-        -->
         <label
             class="sr-only"
             for="tmdb-search"
@@ -74,14 +74,6 @@
         </label>
 
 
-        <!--
-            name="q" ต้องตรงกับค่าที่ View อ่านด้วย:
-
-            request.GET.get("q", "")
-
-            value จาก query ทำให้ข้อความที่ผู้ใช้ค้นหา
-            ยังคงอยู่ในช่อง Search หลังจาก submit
-        -->
         <input
             class="search-input"
             type="search"
@@ -109,17 +101,13 @@
 <!--
     3. TMDB API Error
 
-    error_message จะมีค่าก็ต่อเมื่อ service layer
-    ไม่สามารถดึงข้อมูลจาก TMDB ได้
+    error_message มาจาก TMDB service layer
 
-    Service layer แปลง requests/network/API errors
-    ให้เป็นข้อความทั่วไปก่อนส่งมายัง View
-
-    จึงไม่ควรมี:
-        API token
-        Authorization header
-        request internals
-        หรือข้อมูล credential อื่น
+    Template จะแสดงเพียงข้อความทั่วไป
+    และไม่แสดง:
+        - API Token
+        - Authorization Header
+        - Database credentials
 -->
 {% if error_message %}
 
@@ -134,16 +122,14 @@
 <!--
     4. Search Results
 
-    Results จะแสดงเมื่อมี query เท่านั้น
+    result แต่ละตัวในส่วนนี้
+    ยังไม่ใช่ Movie object ใน PostgreSQL
 
-    result แต่ละตัวในหน้านี้ยังไม่ใช่ Movie model object
-    ที่ถูกบันทึกใน PostgreSQL
-
-    มันยังเป็น dictionary จาก TMDB API
-    ที่ tmdb_search() View เตรียมข้อมูลเพิ่มเติมไว้ เช่น:
-        release_year
-        poster_url
-        already_added
+    เป็นข้อมูลจาก TMDB ที่ View เตรียมเพิ่ม เช่น:
+        - release_year
+        - poster_url
+        - genre_text
+        - already_added
 -->
 {% if query %}
 
@@ -162,7 +148,7 @@
             </h2>
 
             <p class="section-description">
-                Select a movie to add it to your local watchlist.
+                Choose where you want to add each movie.
             </p>
 
         </div>
@@ -171,39 +157,20 @@
 
 
 
-    <!--
-        TMDB results ใช้ grid แยกจาก Movie Watchlist grid
-
-        จำนวน column จะถูกปรับด้วย CSS media queries
-        ตามขนาดหน้าจอ
-    -->
     <div class="tmdb-grid">
 
         {% for result in results %}
 
-            <!--
-                result เป็น dictionary จาก TMDB
-                จึงเข้าถึงข้อมูลผ่าน Template เช่น:
-
-                result.title
-                result.release_year
-                result.poster_url
-
-                Django Template สามารถอ่าน dictionary key
-                ด้วย dot notation ได้
-            -->
             <article class="tmdb-card">
 
 
                 <!--
-                    4.1 TMDB Poster
+                    4.1 Poster
 
                     poster_url ถูกสร้างใน tmdb_search() View
-                    จาก poster_path ที่ TMDB ส่งกลับมา
 
-                    ถ้า TMDB ไม่มี poster
-                    View จะส่ง poster_url เป็น string ว่าง
-                    และ Template จะแสดง placeholder แทน
+                    ถ้า Movie ไม่มี Poster
+                    จะแสดง placeholder แทน
                 -->
                 <div class="poster-frame">
 
@@ -237,13 +204,19 @@
 
 
                 <!--
-                    4.2 TMDB Movie Information
+                    4.2 Movie Information
 
-                    ข้อมูลตรงนี้มีไว้ช่วยให้ผู้ใช้
-                    ตัดสินใจก่อน Add เข้า Watchlist
+                    TMDB Search Card แสดงข้อมูลหลัก:
+                        - Title
+                        - Release Year
+                        - TMDB Rating
+                        - Genre
 
-                    ยังไม่มีการเขียนข้อมูลลง PostgreSQL
-                    จนกว่าจะกด Add to Watchlist
+                    Overview/Description ถูกเอาออก
+
+                    เหตุผลคือหน้า Home Movie Card
+                    ก็ใช้ข้อมูลหลักในลักษณะเดียวกัน
+                    ทำให้ UI ของสองหน้าสอดคล้องกันมากขึ้น
                 -->
                 <div class="tmdb-card-body">
 
@@ -252,15 +225,12 @@
                     </h3>
 
 
+
+                    <!--
+                        Release Year + TMDB Rating
+                    -->
                     <div class="movie-metadata">
 
-                        <!--
-                            release_year ถูกสร้างจาก release_date
-                            ใน tmdb_search() View
-
-                            ถ้า TMDB ไม่มี release date
-                            จะใช้ fallback แทนการแสดงค่าว่าง
-                        -->
                         {% if result.release_year %}
 
                             <span>
@@ -279,11 +249,11 @@
                         <!--
                             vote_average เป็นคะแนนจาก TMDB
 
-                            คะแนนนี้มีไว้แสดงบน Search page เท่านั้น
-                            และไม่ถูกบันทึกเป็น Personal Rating
+                            ไม่ใช่ Personal Rating
+                            ของ Movie Watchlist
 
-                            Personal Rating ใน Movie model
-                            เป็นคะแนน 1–5 ที่ผู้ใช้ให้เอง
+                            Personal Rating ใช้ช่วง 1–5
+                            และผู้ใช้ให้หลังจาก Movie อยู่ใน WATCHED
                         -->
                         {% if result.vote_average %}
 
@@ -305,24 +275,29 @@
 
 
                     <!--
-                        overview อาจมีความยาวมาก
+                        4.3 Genre
 
-                        truncatechars จำกัดความยาวบน Movie Card
-                        เพื่อไม่ให้ card หนึ่งสูงกว่ารายการอื่นมากเกินไป
+                        TMDB Search API ส่ง Genre เป็น genre_ids
 
-                        ข้อมูลต้นฉบับไม่ได้ถูกแก้ไข
-                        เป็นเพียง presentation ใน Template
-                    -->
-                    {% if result.overview %}
+                        tmdb_search() View ใช้ Genre Map
+                        จาก get_movie_genres()
+                        เพื่อแปลงเป็นชื่อ เช่น:
 
-                        <p class="tmdb-overview">
-                            {{ result.overview|truncatechars:180 }}
+                            Action, Science Fiction
+
+                        แล้วเก็บใน:
+                            result["genre_text"]
+                -->
+                    {% if result.genre_text %}
+
+                        <p class="tmdb-genres">
+                            {{ result.genre_text }}
                         </p>
 
                     {% else %}
 
-                        <p class="tmdb-overview text-muted">
-                            No overview available.
+                        <p class="tmdb-genres text-muted">
+                            Genre not available
                         </p>
 
                     {% endif %}
@@ -330,54 +305,117 @@
 
 
                     <!--
-                        already_added ถูกคำนวณใน tmdb_search() View
+                        4.4 Add Movie
 
-                        View เปรียบเทียบ TMDB ID ของผลการค้นหา
-                        กับ Movie.tmdb_id ที่มีอยู่ใน PostgreSQL
+                        already_added ถูกสร้างใน tmdb_search() View
+
+                        ถ้า Movie มี TMDB ID นี้อยู่แล้ว
+                        จะไม่แสดง Add buttons ซ้ำ
+
+                        Movie.tmdb_id ยังมี unique=True
+                        เป็น database protection อีกชั้นหนึ่ง
                     -->
                     {% if result.already_added %}
 
-                        <!--
-                            ถ้ามี Movie นี้แล้ว
-                            ไม่แสดง Add button ซ้ำ
-
-                            database ยังมี unique constraint
-                            บน tmdb_id เป็น protection อีกชั้นหนึ่ง
-                        -->
                         <div class="already-added">
                             Already in Watchlist
                         </div>
 
+
                     {% else %}
 
                         <!--
-                            Add to Watchlist เปลี่ยนข้อมูลใน PostgreSQL
-                            ดังนั้นต้องใช้ POST ไม่ใช่ GET
+                            ผู้ใช้เลือกสถานะของ Movie
+                            ตั้งแต่ตอน Import
 
-                            Browser ส่งกลับเพียง TMDB ID
+                            มีสอง POST Forms:
 
-                            tmdb_add_movie() จะใช้ ID นี้
-                            ไปดึง Movie Details จาก TMDB server-side อีกครั้ง
-                            ก่อนสร้าง Movie object จริงใน database
+                            Plan to Watch:
+                                watch_status="plan"
+                                watched=False
 
-                            วิธีนี้ไม่เชื่อ title/year/genre
-                            ที่อาจถูกแก้จาก browser
+                            Watched:
+                                watch_status="watched"
+                                watched=True
+
+                            Browser ไม่ได้ส่ง Title,
+                            Genre หรือ Poster ไปให้ database โดยตรง
+
+                            tmdb_add_movie() ใช้ TMDB ID
+                            ดึง Movie Details server-side อีกครั้ง
+                            ก่อนสร้าง Movie object
                         -->
-                        <form
-                            method="post"
-                            action="{% url 'tmdb_add_movie' result.id %}"
-                        >
+                        <div class="tmdb-add-actions">
 
-                            {% csrf_token %}
 
-                            <button
-                                class="button button-primary button-full"
-                                type="submit"
+                            <!--
+                                Add to Plan to Watch
+
+                                Movie ใหม่จะถูกสร้างด้วย:
+                                    watched=False
+
+                                และปรากฏใน PLAN TO WATCH
+                                บนหน้า Home
+                            -->
+                            <form
+                                method="post"
+                                action="{% url 'tmdb_add_movie' result.id %}"
                             >
-                                + Add to Watchlist
-                            </button>
 
-                        </form>
+                                {% csrf_token %}
+
+                                <input
+                                    type="hidden"
+                                    name="watch_status"
+                                    value="plan"
+                                >
+
+                                <button
+                                    class="button button-primary button-full"
+                                    type="submit"
+                                >
+                                    + Add to Plan to Watch
+                                </button>
+
+                            </form>
+
+
+
+                            <!--
+                                Add to Watched
+
+                                Movie ใหม่จะถูกสร้างด้วย:
+                                    watched=True
+
+                                และปรากฏใน WATCHED
+                                บนหน้า Home
+
+                                จากนั้นผู้ใช้สามารถให้
+                                Personal Rating 1–5 ได้
+                            -->
+                            <form
+                                method="post"
+                                action="{% url 'tmdb_add_movie' result.id %}"
+                            >
+
+                                {% csrf_token %}
+
+                                <input
+                                    type="hidden"
+                                    name="watch_status"
+                                    value="watched"
+                                >
+
+                                <button
+                                    class="button button-add-watched button-full"
+                                    type="submit"
+                                >
+                                    + Add to Watched
+                                </button>
+
+                            </form>
+
+                        </div>
 
                     {% endif %}
 
@@ -389,11 +427,8 @@
         {% empty %}
 
             <!--
-                ทำงานเมื่อ TMDB request สำเร็จ
-                แต่ไม่มี Movie ที่ตรงกับคำค้น
-
-                แตกต่างจาก error_message
-                ซึ่งหมายถึงการเรียก API ไม่สำเร็จ
+                TMDB Request สำเร็จ
+                แต่ไม่มี Movie ที่ตรงกับ query
             -->
             <div class="empty-state">
 
@@ -419,10 +454,6 @@
 
 <!--
     5. Back Navigation
-
-    ใช้ URL name movie_list
-    แทนการ hard-code "/" เพื่อให้ URL routing
-    ยังคงจัดการจาก urls.py จุดเดียว
 -->
 <div class="page-footer-action">
 

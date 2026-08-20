@@ -59,13 +59,25 @@
                     Home
                 </a>
 
-                <span class="nav-link nav-link-disabled">
-                    About
-                </span>
+                <!--
+    About และ Contact มี Django Views/URLs แล้ว
 
-                <span class="nav-link nav-link-disabled">
-                    Contact
-                </span>
+    ใช้ URL name แทน hard-coded path
+    เพื่อให้ routing ยังถูกจัดการจาก urls.py จุดเดียว
+-->
+<a
+    class="nav-link"
+    href="{% url 'about' %}"
+>
+    About
+</a>
+
+<a
+    class="nav-link"
+    href="{% url 'contact' %}"
+>
+    Contact
+</a>
 
             </div>
 

@@ -1,5 +1,6 @@
 {% extends "movies/base.html" %}
 
+
 {% block title %}
     Movie Watchlist
 {% endblock %}
@@ -11,34 +12,49 @@
     1. Hero Section
 
     ส่วนบนสุดของหน้า Home ใช้แสดงชื่อ application
-    และ action หลักที่ผู้ใช้สามารถทำได้
+    และ action หลักสำหรับการเพิ่ม Movie
 
-    Add Movie:
-        เพิ่ม Movie ด้วยข้อมูลที่ผู้ใช้กรอกเอง
+    ใน UI เวอร์ชันนี้ TMDB เป็นวิธีเพิ่ม Movie หลัก
+    เพราะสามารถดึงข้อมูล Movie จริง เช่น:
+        - Title
+        - Release Year
+        - Genre
+        - Poster
 
-    Search TMDB:
-        ค้น Movie จาก TMDB API
-        แล้วเลือกเพิ่มเข้า Local Watchlist
+    ส่วน Manual Add ยังคงเก็บไว้
+    เพื่อรองรับ CRUD requirement ของ Assignment
+    และกรณีที่ Movie ที่ผู้ใช้ต้องการไม่มีอยู่ใน TMDB
 -->
 <section class="hero-section">
 
     <div class="hero-copy">
 
         <!--
-            eyebrow เป็นข้อความขนาดเล็กเหนือ heading
-            ใช้ช่วยสร้างลำดับชั้นของข้อมูลใน UI
+            eyebrow เป็นข้อความขนาดเล็กเหนือ Heading หลัก
+
+            ใช้สร้าง visual hierarchy
+            เพื่อแยกประเภทของหน้าออกจากชื่อ application
         -->
         <p class="eyebrow">
             PERSONAL LIBRARY
         </p>
 
+
         <h1>
             Movie Watchlist
         </h1>
 
+
+        <!--
+            CSS จะพยายามแสดงข้อความนี้เป็นหนึ่งบรรทัด
+            เมื่อพื้นที่บน Desktop เพียงพอ
+
+            บน Tablet หรือ Mobile
+            CSS จะอนุญาตให้ข้อความ wrap ตามขนาดหน้าจอ
+            เพื่อไม่ให้เกิด horizontal overflow
+        -->
         <p class="hero-description">
-            Keep track of what you want to watch,
-            what you've finished, and what you thought of it.
+            Keep track of what you plan to watch (unwatched), what you've finished, and how you rated each movie.
         </p>
 
     </div>
@@ -47,33 +63,35 @@
     <div class="hero-actions">
 
         <!--
-            movie_add เป็น URL name จาก movies/urls.py
+            TMDB เป็นวิธี Add Movie หลักที่ต้องการ showcase
 
-            ใช้ Django URL tag แทนการเขียน path แบบ hard-code
-            เพื่อให้เปลี่ยน URL ภายหลังได้โดยไม่ต้องแก้ Template
+            Link เปิด tmdb_search View
+            ซึ่ง Django backend จะเป็นผู้เรียก TMDB API
+
+            API Read Access Token จึงไม่ถูกส่งมายัง browser
+            หรือเขียนไว้ใน Template นี้
         -->
         <a
             class="button button-primary"
-            href="{% url 'movie_add' %}"
+            href="{% url 'tmdb_search' %}"
         >
-            + Add Movie
+            + Add Movie via TMDB
         </a>
 
 
         <!--
-            TMDB Search เป็น additional feature ของ project
+            Manual Add ใช้ movie_add View
 
-            Browser จะเปิด Django View ก่อน
-            จากนั้น Django backend เป็นผู้เรียก TMDB API
-
-            API Read Access Token จึงไม่ถูกใส่ไว้ใน HTML
-            หรือส่งให้ JavaScript ฝั่ง browser
+            ยังมีประโยชน์สำหรับ:
+                - Movie ที่ไม่มีใน TMDB
+                - การกรอกข้อมูลเอง
+                - การแสดง Django ModelForm CRUD ตาม Assignment
         -->
         <a
             class="button button-secondary"
-            href="{% url 'tmdb_search' %}"
+            href="{% url 'movie_add' %}"
         >
-            Search TMDB
+            Add Movie Manually
         </a>
 
     </div>
@@ -85,16 +103,17 @@
 <!--
     2. Local Watchlist Search
 
-    Search ตรงนี้แตกต่างจาก Search TMDB
+    Search ตรงนี้แตกต่างจาก TMDB Search
 
     Local Search:
         ค้นเฉพาะ Movie ที่ถูกบันทึกอยู่ใน PostgreSQL แล้ว
 
     TMDB Search:
-        ค้นจาก external TMDB catalog
+        ค้น Movie จาก external TMDB catalog
+        ก่อนเลือกว่าจะ import เข้าสู่ Watchlist หรือไม่
 
-    Form นี้ใช้ GET เพราะเป็นการอ่านและ filter ข้อมูลเท่านั้น
-    ไม่ได้สร้าง แก้ไข หรือลบข้อมูลใน database
+    Form นี้ใช้ GET เพราะเป็น read-only operation
+    และไม่ได้สร้าง แก้ไข หรือลบข้อมูลใน database
 -->
 <section class="search-panel">
 
@@ -117,10 +136,10 @@
     >
 
         <!--
-            label ยังมีอยู่สำหรับ accessibility
+            label ยังคงอยู่สำหรับ accessibility
 
-            class="sr-only" จะซ่อน label ทาง visual
-            แต่ screen reader ยังสามารถอ่านได้
+            class="sr-only" ซ่อนเฉพาะทาง visual
+            แต่ screen reader ยังสามารถอ่าน label ได้
         -->
         <label
             class="sr-only"
@@ -134,10 +153,10 @@
             name="q" เชื่อมกับ movie_list() ใน views.py
 
             View อ่านค่าด้วย:
-            request.GET.get("q", "")
+                request.GET.get("q", "")
 
-            value จาก query ทำให้คำค้นเดิม
-            ยังคงอยู่ในช่องหลังจาก submit form
+            value="{{ query }}" ทำให้คำค้นเดิม
+            ยังคงอยู่ในช่อง Search หลังจาก submit
         -->
         <input
             class="search-input"
@@ -160,11 +179,11 @@
         {% if query %}
 
             <!--
-                ถ้ามีคำค้นอยู่จึงแสดง Clear
-
-                Link นี้กลับไปยัง movie_list
+                Clear Search กลับไปยัง movie_list
                 โดยไม่มี query parameter
-                ทำให้ View กลับมาแสดง Movie ทั้งหมด
+
+                movie_list() จึงกลับมาใช้ Movie QuerySet ทั้งหมด
+                แทน filtered results
             -->
             <a
                 class="button button-ghost"
@@ -184,9 +203,10 @@
 {% if query %}
 
     <!--
-        แสดงคำค้นปัจจุบันเพื่อให้ผู้ใช้รู้ว่า
-        Movie ที่เห็นด้านล่างเป็น filtered results
-        ไม่ใช่ Watchlist ทั้งหมด
+        แสดง context ของ Search ปัจจุบัน
+
+        ช่วยให้ผู้ใช้รู้ว่า Movie ด้านล่าง
+        เป็น filtered results ไม่ใช่ Watchlist ทั้งหมด
     -->
     <div class="search-context">
 
@@ -213,7 +233,8 @@
     และเรียงด้วย:
         order_by("-date_added")
 
-    ดังนั้น Movie ที่เพิ่มล่าสุดจะปรากฏก่อน
+    ดังนั้น Movie ที่เพิ่มล่าสุด
+    จะปรากฏก่อน Movie ที่เพิ่มก่อนหน้า
 -->
 <section
     class="movie-section"
@@ -226,7 +247,8 @@
 
             <!--
                 section-kicker เป็นข้อความรอง
-                สำหรับบอกความหมายของ section แบบสั้น
+                ที่ช่วยบอกความหมายของ section
+                ก่อน Heading หลัก
             -->
             <p class="section-kicker">
                 UP NEXT
@@ -245,12 +267,16 @@
     </div>
 
 
+
     <!--
         movie-grid ใช้ CSS Grid
 
-        Desktop จะแสดงหลาย Movie ต่อแถว
-        และ CSS media queries จะลดจำนวน column
-        ตามขนาดหน้าจอ
+        Desktop:
+            แสดงหลาย Movie ต่อแถว
+
+        Tablet / Mobile:
+            CSS media queries จะปรับจำนวน columns
+            ให้เหมาะกับขนาดหน้าจอ
     -->
     <div class="movie-grid">
 
@@ -258,11 +284,13 @@
 
             <!--
                 Movie object แต่ละตัวมาจาก PostgreSQL
-                ผ่าน Django ORM ใน movie_list View
+                ผ่าน Django ORM ใน movie_list() View
 
-                data-movie-card ไม่ได้ใช้สำหรับ styling
-                แต่ใช้ให้ movie_list.js หา Movie cards
+                data-movie-card ใช้โดย movie_list.js
                 สำหรับระบบ Show More / Show Less
+
+                Attribute นี้ไม่ได้ใช้เป็น database identifier
+                และไม่ได้เปลี่ยน Movie object
             -->
             <article
                 class="movie-card"
@@ -273,13 +301,15 @@
                 <!--
                     3.1 Movie Poster
 
-                    poster_url เป็น @property ของ Movie model
+                    movie.poster_url เป็น @property
+                    ที่เราสร้างไว้ใน Movie model
 
-                    Movie ที่ import จาก TMDB จะมี poster_path
-                    และ property จะเปลี่ยนเป็น image URL เต็ม
+                    Movie ที่ import จาก TMDB:
+                        poster_path → poster_url → รูป Poster
 
-                    Manual Movie อาจไม่มี poster_path
-                    จึงต้องมี placeholder รองรับ
+                    Manual Movie:
+                        อาจไม่มี poster_path
+                        จึงใช้ No Poster placeholder
                 -->
                 <div class="poster-frame">
 
@@ -287,10 +317,10 @@
 
                         <!--
                             loading="lazy" ช่วยให้ browser
-                            ยังไม่โหลดรูปที่อยู่นอก viewport ทันที
+                            ไม่จำเป็นต้องโหลด Poster ทุกภาพทันที
 
-                            เหมาะกับหน้า Watchlist
-                            ที่อาจมี Movie จำนวนมาก
+                            เหมาะกับ Watchlist ที่มี Movie จำนวนมาก
+                            และช่วยลด resource ที่ใช้ตอนเปิดหน้า
                         -->
                         <img
                             class="movie-poster"
@@ -302,8 +332,8 @@
                     {% else %}
 
                         <!--
-                            ถ้าไม่มี poster_url
-                            แสดง placeholder แทน broken image
+                            ถ้าไม่มี Poster
+                            ใช้ placeholder แทน broken image
                         -->
                         <div class="poster-placeholder">
 
@@ -335,9 +365,11 @@
                 <!--
                     3.2 Movie Information
 
-                    แสดงข้อมูลหลักที่มาจาก Movie model:
-                    title, release_year, genre,
-                    personal_rating และ date_added
+                    ข้อมูลหลักมาจาก Movie model:
+                        - title
+                        - release_year
+                        - genre
+                        - date_added
                 -->
                 <div class="movie-card-body">
 
@@ -345,7 +377,7 @@
 
                         <!--
                             title เป็น required field
-                            จึงควรมีค่าเสมอ
+                            ตาม Movie model
                         -->
                         <h3 class="movie-title">
                             {{ movie.title }}
@@ -357,8 +389,8 @@
                             <!--
                                 release_year เป็น optional field
 
-                                ถ้าไม่มีค่าใน PostgreSQL
-                                ให้แสดงข้อความแทนการแสดง None
+                                ถ้า PostgreSQL เก็บ NULL
+                                Template จะแสดง fallback แทน
                             -->
                             {% if movie.release_year %}
 
@@ -376,10 +408,10 @@
 
 
                             <!--
-                                ใช้เป็นตัวแบ่งระหว่าง Year และ Genre
+                                จุดนี้เป็น presentation separator เท่านั้น
 
                                 aria-hidden ทำให้ screen reader
-                                ไม่จำเป็นต้องอ่านข้อความตกแต่งนี้
+                                ไม่จำเป็นต้องอ่านสัญลักษณ์ตกแต่ง
                             -->
                             <span
                                 class="metadata-divider"
@@ -391,7 +423,9 @@
 
                             <!--
                                 genre สามารถเว้นว่างได้ใน Movie model
-                                จึงต้องมี fallback เช่นเดียวกับ release_year
+
+                                ถ้าไม่มีค่า
+                                จะแสดงข้อความที่เข้าใจง่ายกว่า string ว่าง
                             -->
                             {% if movie.genre %}
 
@@ -416,44 +450,35 @@
                     <!--
                         3.3 Personal Rating
 
-                        Personal Rating เป็นคะแนน 1–5
-                        ที่ผู้ใช้ให้ Movie ด้วยตัวเอง
+                        Movie ใน PLAN TO WATCH มี watched=False
 
-                        ไม่ใช่ vote_average จาก TMDB
+                        เราจึงไม่แสดง Rating Stars
+                        เพราะใน workflow ของ application
+                        ผู้ใช้ควรให้คะแนนหลังจากดู Movie แล้ว
 
-                        Movie ที่ import จาก TMDB ใหม่
-                        จึงเริ่มต้น personal_rating=None
-                -->
+                        ถึง UI จะไม่มี Rating controls
+                        movie_rate() View ยังตรวจ watched=True
+                        ที่ backend อีกครั้งเพื่อป้องกันการแก้ request เอง
+                    -->
                     <div class="rating-block">
 
                         <span class="rating-label">
                             PERSONAL RATING
                         </span>
 
-
-                        {% if movie.personal_rating %}
-
-                            <strong class="rating-value">
-                                {{ movie.personal_rating }}/5
-                            </strong>
-
-                        {% else %}
-
-                            <span class="rating-empty">
-                                Not rated
-                            </span>
-
-                        {% endif %}
+                        <span class="rating-empty">
+                            Rate after watching
+                        </span>
 
                     </div>
 
 
                     <!--
-                        date_added ถูกสร้างอัตโนมัติ
-                        ตอน Movie object ถูกเพิ่มครั้งแรก
+                        date_added ถูกกำหนดอัตโนมัติ
+                        ตอน Movie object ถูกสร้างครั้งแรก
 
-                        date filter ช่วยเปลี่ยนจาก datetime เต็ม
-                        ให้เป็นวันที่ที่อ่านง่ายบน UI
+                        date filter แปลง datetime
+                        เป็นวันที่ที่อ่านง่ายบน UI
                     -->
                     <p class="date-added">
                         Added {{ movie.date_added|date:"M j, Y" }}
@@ -466,21 +491,21 @@
                 <!--
                     3.4 Movie Actions
 
-                    ประกอบด้วย:
-                    - Mark Watched
-                    - Edit
-                    - Delete
+                    Plan to Watch Card มี:
+                        - Mark Watched
+                        - Edit
+                        - Delete
                 -->
                 <div class="movie-card-actions">
 
                     <!--
-                        Toggle watched เป็น operation
-                        ที่แก้ข้อมูลใน PostgreSQL
+                        Toggle watched เป็น database-changing operation
 
-                        จึงใช้ POST ไม่ใช้ GET
+                        จึงใช้:
+                            POST
+                            CSRF token
 
-                        CSRF token ป้องกัน Cross-Site
-                        Request Forgery ตามระบบของ Django
+                        ไม่ใช้ GET link สำหรับเปลี่ยนข้อมูล
                     -->
                     <form
                         method="post"
@@ -501,10 +526,10 @@
 
 
                     <!--
-                        Edit ส่ง movie.id ไปยัง movie_edit View
+                        Edit ส่ง movie.id ไปยัง movie_edit()
 
-                        View ใช้ id นี้ค้น Movie object เดิม
-                        และนำไปใส่เป็น instance ของ MovieForm
+                        View ใช้ ID นี้หา Movie object
+                        แล้วส่งเข้า MovieForm ด้วย instance=movie
                     -->
                     <a
                         class="button button-card-secondary"
@@ -515,11 +540,12 @@
 
 
                     <!--
-                        Delete link ยังไม่ได้ลบ Movie ทันที
+                        Delete link ยังไม่ลบ Movie ทันที
 
-                        Link จะเปิด confirmation page ก่อน
-                        แล้ว movie_delete View จะลบจริง
-                        เฉพาะเมื่อได้รับ POST
+                        Link เปิด confirmation page ก่อน
+
+                        การลบจริงจะเกิดเฉพาะเมื่อ
+                        movie_delete() ได้รับ POST
                     -->
                     <a
                         class="button button-danger-ghost"
@@ -536,12 +562,14 @@
         {% empty %}
 
             <!--
-                ถ้า QuerySet ไม่มี Movie
-                Django จะเข้ามาแสดง Empty State ตรงนี้
+                ถ้า plan_to_watch_movies ไม่มี Movie
+                Django จะแสดง Empty State
 
-                ข้อความจะแตกต่างกันระหว่าง:
-                - กำลัง Search แล้วไม่พบ
-                - Watchlist ยังไม่มี unwatched Movie จริง
+                กรณีมี query:
+                    หมายถึง Search แล้วไม่พบ unwatched Movie
+
+                กรณีไม่มี query:
+                    หมายถึงไม่มี Movie ที่ watched=False จริง
             -->
             <div class="empty-state">
 
@@ -579,17 +607,20 @@
     <!--
         3.5 Show More / Show Less
 
-        ปุ่มเริ่มต้นมี hidden
-        เพราะยังไม่รู้ว่า section มี Movie กี่เรื่อง
+        Button เริ่มต้นมี hidden
+        เพราะ Template ยังไม่รู้ว่า section มี Movie กี่เรื่อง
 
         movie_list.js จะนับ data-movie-card
 
         ถ้ามากกว่า 8:
-            แสดง 8 cards แรก
-            และเปิด Show More button
+            แสดง 8 Movie แรก
+            แล้วเปิด Show More
 
         ถ้าไม่เกิน 8:
-            ปุ่มจะยังคงถูกซ่อน
+            Button จะยังถูกซ่อน
+
+        Movie ทุกเรื่องยังถูก Django render ลง HTML
+        จึงไม่ได้เป็น database pagination
     -->
     <div class="show-more-container">
 
@@ -612,13 +643,19 @@
 <!--
     4. Watched Section
 
-    watched_movies มาจาก movie_list() View เช่นเดียวกัน
+    watched_movies มาจาก movie_list() View
 
-    แต่ View filter ด้วย:
+    View filter ด้วย:
         watched=True
 
-    Movie card ใช้โครงสร้างใกล้เคียงกับ Plan to Watch
-    เพื่อให้ UI มีความสม่ำเสมอ
+    Movie Card ใช้ structure ใกล้เคียงกับ PLAN TO WATCH
+    เพื่อให้ UI สม่ำเสมอ
+
+    ความแตกต่างหลักคือ:
+        - Status เป็น Watched
+        - สามารถให้ Personal Rating 1–5
+        - Rating แสดงเป็นดาว
+        - Toggle เปลี่ยนกลับเป็น Unwatched
 -->
 <section
     class="movie-section"
@@ -646,6 +683,7 @@
     </div>
 
 
+
     <div class="movie-grid">
 
         {% for movie in watched_movies %}
@@ -657,10 +695,10 @@
 
 
                 <!--
-                    4.1 Poster
+                    4.1 Movie Poster
 
                     ใช้ Movie.poster_url property
-                    แบบเดียวกับ Plan to Watch
+                    แบบเดียวกับ PLAN TO WATCH
                 -->
                 <div class="poster-frame">
 
@@ -759,33 +797,232 @@
 
 
                     <!--
-                        Personal Rating ยังใช้ข้อมูลจากผู้ใช้เอง
-                        ไม่เกี่ยวกับคะแนนของ TMDB
+                        4.3 Inline Personal Rating
+
+                        Movie ใน WATCHED มี watched=True
+                        จึงสามารถให้คะแนน 1–5 ได้จาก Card โดยตรง
+
+                        UI ใช้ดาวแทนตัวเลขเพื่อให้ผู้ใช้
+                        เข้าใจว่าเป็น Rating ได้ง่ายขึ้น
+
+                        แต่ในระดับ backend ค่ายังคงเหมือนเดิม:
+
+                            ดาวดวงที่ 1 → rating=1
+                            ดาวดวงที่ 2 → rating=2
+                            ดาวดวงที่ 3 → rating=3
+                            ดาวดวงที่ 4 → rating=4
+                            ดาวดวงที่ 5 → rating=5
+
+                        ดังนั้น movie_rate() View ไม่ต้องเปลี่ยน
+
+                        ถ้าคะแนนปัจจุบันเป็น 4:
+                            ★ ★ ★ ★ ☆
+
+                        ถ้ายังไม่มีคะแนน:
+                            ☆ ☆ ☆ ☆ ☆
+
+                        การกดดาวจะส่ง POST
+                        และบันทึก personal_rating ลง PostgreSQL
                     -->
-                    <div class="rating-block">
+                    <div class="rating-block rating-block-watched">
 
-                        <span class="rating-label">
-                            PERSONAL RATING
-                        </span>
+                        <div class="rating-heading">
 
-
-                        {% if movie.personal_rating %}
-
-                            <strong class="rating-value">
-                                {{ movie.personal_rating }}/5
-                            </strong>
-
-                        {% else %}
-
-                            <span class="rating-empty">
-                                Not rated
+                            <span class="rating-label">
+                                PERSONAL RATING
                             </span>
 
-                        {% endif %}
+
+                            <!--
+    data-rating-display ใช้ให้ JavaScript
+    อัปเดตค่าคะแนนหลัง POST สำเร็จ
+    โดยไม่ต้อง reload Template ใหม่ทั้งหน้า
+-->
+<span
+    class="{% if movie.personal_rating %}rating-value{% else %}rating-empty{% endif %}"
+    data-rating-display
+>
+    {% if movie.personal_rating %}
+        {{ movie.personal_rating }}/5
+    {% else %}
+        Not rated
+    {% endif %}
+</span>
+
+                        </div>
+
+
+
+                        <!--
+    Inline Rating Form
+
+    Form ยังเป็น POST form ปกติ
+    เพื่อให้ Django + CSRF protection ทำงานเหมือนเดิม
+
+    data-rating-form ใช้ให้ movie_list.js
+    ตรวจจับ Form นี้แล้วส่งข้อมูลด้วย fetch()
+
+    เมื่อ JavaScript ทำงาน:
+        - บันทึก Rating ลง PostgreSQL
+        - ไม่ reload หน้า
+        - scroll position จึงอยู่ตำแหน่งเดิม
+
+    ถ้า JavaScript ใช้งานไม่ได้:
+        Form ยังสามารถ submit แบบปกติได้
+        เป็น progressive enhancement
+-->
+<form
+    method="post"
+    action="{% url 'movie_rate' movie.id %}"
+    class="rating-form"
+    data-rating-form
+>
+
+                            {% csrf_token %}
+
+
+                            <!--
+                                ดาวดวงที่ 1
+
+                                ถ้าคะแนนปัจจุบัน >= 1
+                                แสดงดาวเต็ม ★
+
+                                ถ้ายังไม่ถึง
+                                แสดงดาวโปร่ง ☆
+                            -->
+                            <button
+                                class="rating-star"
+                                type="submit"
+                                name="rating"
+                                value="1"
+                                aria-label="Rate 1 out of 5"
+                                title="1 out of 5"
+                            >
+                                {% if movie.personal_rating and movie.personal_rating >= 1 %}
+                                    ★
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            </button>
+
+
+                            <!--
+                                ดาวดวงที่ 2
+                            -->
+                            <button
+                                class="rating-star"
+                                type="submit"
+                                name="rating"
+                                value="2"
+                                aria-label="Rate 2 out of 5"
+                                title="2 out of 5"
+                            >
+                                {% if movie.personal_rating and movie.personal_rating >= 2 %}
+                                    ★
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            </button>
+
+
+                            <!--
+                                ดาวดวงที่ 3
+                            -->
+                            <button
+                                class="rating-star"
+                                type="submit"
+                                name="rating"
+                                value="3"
+                                aria-label="Rate 3 out of 5"
+                                title="3 out of 5"
+                            >
+                                {% if movie.personal_rating and movie.personal_rating >= 3 %}
+                                    ★
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            </button>
+
+
+                            <!--
+                                ดาวดวงที่ 4
+                            -->
+                            <button
+                                class="rating-star"
+                                type="submit"
+                                name="rating"
+                                value="4"
+                                aria-label="Rate 4 out of 5"
+                                title="4 out of 5"
+                            >
+                                {% if movie.personal_rating and movie.personal_rating >= 4 %}
+                                    ★
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            </button>
+
+
+                            <!--
+                                ดาวดวงที่ 5
+                            -->
+                            <button
+                                class="rating-star"
+                                type="submit"
+                                name="rating"
+                                value="5"
+                                aria-label="Rate 5 out of 5"
+                                title="5 out of 5"
+                            >
+                                {% if movie.personal_rating and movie.personal_rating >= 5 %}
+                                    ★
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            </button>
+
+
+
+                            {% if movie.personal_rating %}
+
+                                <!--
+                                    Clear ไม่ได้ลบ Movie
+
+                                    button นี้ส่ง:
+                                        rating="clear"
+
+                                    movie_rate() จะเปลี่ยน:
+                                        personal_rating = None
+
+                                    จากนั้น Rating จะกลับเป็น:
+                                        ☆ ☆ ☆ ☆ ☆
+
+                                    และแสดง Not rated
+                                -->
+                                <button
+                                    class="rating-clear"
+                                    type="submit"
+                                    name="rating"
+                                    value="clear"
+                                >
+                                    Clear
+                                </button>
+
+                            {% endif %}
+
+                        </form>
 
                     </div>
 
 
+
+                    <!--
+                        date_added คือวันที่ Movie
+                        ถูกเพิ่มเข้า Watchlist
+
+                        Rating ที่เปลี่ยนภายหลัง
+                        จะไม่เปลี่ยน date_added
+                    -->
                     <p class="date-added">
                         Added {{ movie.date_added|date:"M j, Y" }}
                     </p>
@@ -795,21 +1032,22 @@
 
 
                 <!--
-                    4.3 Movie Actions
+                    4.4 Movie Actions
 
                     Watched Movie ใช้ toggle View ตัวเดิม
-                    แต่ปุ่มเปลี่ยนข้อความเป็น Mark Unwatched
-                -->
-                <div class="movie-card-actions">
 
-                    <!--
-                        movie_toggle_watched() ใช้:
+                    movie_toggle_watched() ใช้:
 
                         movie.watched = not movie.watched
 
-                        ตอนนี้ค่าคือ True
-                        ดังนั้นเมื่อ submit จะเปลี่ยนกลับเป็น False
-                    -->
+                    เมื่อค่าปัจจุบันเป็น True:
+
+                        True → False
+
+                    Movie จึงย้ายกลับไป PLAN TO WATCH
+                -->
+                <div class="movie-card-actions">
+
                     <form
                         method="post"
                         action="{% url 'movie_toggle_watched' movie.id %}"
@@ -851,13 +1089,14 @@
         {% empty %}
 
             <!--
-                Watched section มี Empty State ของตัวเอง
+                ถ้า watched_movies ไม่มี Movie
+                จะแสดง Empty State
 
-                ถ้ามี Local Search:
-                    หมายถึงไม่พบ watched Movie ตามคำค้น
+                มี query:
+                    Search แล้วไม่พบ watched Movie
 
-                ถ้าไม่มี Search:
-                    หมายถึงยังไม่มี Movie ที่ watched=True
+                ไม่มี query:
+                    ยังไม่มี Movie ที่ watched=True
             -->
             <div class="empty-state">
 
@@ -892,16 +1131,21 @@
 
 
     <!--
-        Watched section มี Show More ของตัวเอง
+        4.5 Show More / Show Less
 
-        JavaScript จะจัดการแต่ละ data-movie-section
-        แยกจากกัน
+        WATCHED มี Show More ของตัวเอง
+        และถูกจัดการแยกจาก PLAN TO WATCH
 
         ตัวอย่าง:
-        Plan to Watch มี 12 เรื่อง
-        Watched มี 4 เรื่อง
 
-        จะมี Show More เฉพาะ Plan to Watch
+        Plan to Watch:
+            12 Movies → มี Show More
+
+        Watched:
+            5 Movies → ไม่มี Show More
+
+        ระบบนี้เปลี่ยนเฉพาะ presentation
+        และไม่ได้เปลี่ยน QuerySet หรือ PostgreSQL
     -->
     <div class="show-more-container">
 

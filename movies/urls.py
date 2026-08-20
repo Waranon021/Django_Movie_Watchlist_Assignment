@@ -49,4 +49,27 @@ urlpatterns = [
         views.tmdb_add_movie,
         name="tmdb_add_movie",
     ),
+
+        # Inline Personal Rating
+    #
+    # การให้คะแนนเปลี่ยนข้อมูลใน PostgreSQL
+    # View จึงถูกจำกัดเป็น POST ด้วย @require_POST
+    path(
+        "movies/<int:movie_id>/rate/",
+        views.movie_rate,
+        name="movie_rate",
+    ),
+
+    # Static informational pages
+    path(
+        "about/",
+        views.about,
+        name="about",
+    ),
+
+    path(
+        "contact/",
+        views.contact,
+        name="contact",
+    ),
 ]
