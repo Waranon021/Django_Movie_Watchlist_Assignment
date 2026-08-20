@@ -1,0 +1,109 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+            Movie Watchlist
+        {% endblock %}
+    </title>
+
+    <!--
+        styles.css เป็น stylesheet หลักที่ทุกหน้าใช้ร่วมกัน
+
+        Django static tag จะสร้าง URL ไปยังไฟล์
+        ภายใน movies/static/movies/
+    -->
+    <link
+        rel="stylesheet"
+        href="{% static 'movies/css/styles.css' %}"
+    >
+
+    {% block extra_head %}
+    {% endblock %}
+</head>
+
+<body>
+
+    <!-- Navigation
+
+         Navigation ถูกเก็บไว้ใน base.html
+         เพราะทุกหน้าของ application ใช้โครงสร้างนี้ร่วมกัน
+
+         About และ Contact จะเปิดใช้งานจริงใน Checkpoint 11  -->
+
+    <header class="site-header">
+        <nav class="site-nav">
+
+            <a
+                class="site-brand"
+                href="{% url 'movie_list' %}"
+            >
+                MW
+            </a>
+
+            <div class="nav-links">
+
+                <a
+                    class="nav-link"
+                    href="{% url 'movie_list' %}"
+                >
+                    Home
+                </a>
+
+                <span class="nav-link nav-link-disabled">
+                    About
+                </span>
+
+                <span class="nav-link nav-link-disabled">
+                    Contact
+                </span>
+
+            </div>
+
+            <!--
+                Empty element ช่วยรักษาตำแหน่ง Navigation
+                ให้อยู่กึ่งกลางบน Desktop
+            -->
+            <div class="nav-spacer"></div>
+
+        </nav>
+    </header>
+
+
+    <!--
+        Child template แต่ละหน้าจะใส่ content
+        ของตัวเองลงใน block นี้
+    -->
+    <main class="page-container">
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+
+    <!--
+        JavaScript สำหรับ progressive enhancement
+
+        ถ้าหน้าใดไม่มี movie section
+        script จะไม่ทำอะไรกับหน้านั้น
+    -->
+    <script
+        src="{% static 'movies/js/movie_list.js' %}"
+        defer
+    ></script>
+
+    {% block extra_scripts %}
+    {% endblock %}
+
+</body>
+</html>

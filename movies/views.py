@@ -232,7 +232,7 @@ def tmdb_search(request):
     # เรียก TMDB เฉพาะเมื่อผู้ใช้กรอกคำค้นจริง
     if query:
         try:
-            # ใช้ service layer ที่สร้างไว้ใน 9.6
+            # ใช้ service layer ที่สร้างไว้ใน Checkpoint 9
             #
             # จำกัด 10 รายการแรกเพื่อให้หน้า Search
             # ไม่ยาวเกินไปสำหรับ Assignment
@@ -245,6 +245,9 @@ def tmdb_search(request):
 
     # ดึงเฉพาะ TMDB IDs ของ Movie
     # ที่ถูก import เข้า Local Watchlist แล้ว
+    #
+    # set ช่วยให้ตรวจว่า TMDB ID อยู่ใน Watchlist หรือไม่
+    # ได้ง่ายด้วย operator "in"
     existing_tmdb_ids = set(
         Movie.objects.exclude(
             tmdb_id__isnull=True
@@ -254,10 +257,15 @@ def tmdb_search(request):
         )
     )
 
-    # เตรียมข้อมูลเพิ่มเติมสำหรับ template
+    # เตรียมข้อมูลเพิ่มเติมสำหรับ Template
+    #
+    # TMDB result เป็น dictionary
+    # จึงสามารถเพิ่ม key ใหม่ เช่น release_year,
+    # already_added และ poster_url ได้ก่อนส่งไปยัง Template
     for result in results:
+
         # TMDB ส่ง release_date ในรูปแบบ YYYY-MM-DD
-        # แต่หน้า Search ของเราต้องการแสดงเพียงปี
+        # แต่หน้า Search ของเราต้องการแสดงเฉพาะปี
         release_date = result.get("release_date") or ""
 
         if len(release_date) >= 4:
@@ -265,12 +273,38 @@ def tmdb_search(request):
         else:
             result["release_year"] = ""
 
-        # เช็กว่า TMDB Movie เรื่องนี้มีอยู่ใน Watchlist แล้วหรือยัง
-        # ถ้ามีแล้ว Template จะแสดง Already in Watchlist
+        # ตรวจว่า Movie จาก TMDB เรื่องนี้
+        # ถูกเพิ่มเข้า Local PostgreSQL Watchlist แล้วหรือยัง
+        #
+        # Template จะใช้ค่านี้ตัดสินใจว่า
+        # จะแสดง Add to Watchlist หรือ Already in Watchlist
         result["already_added"] = (
             result.get("id") in existing_tmdb_ids
         )
 
+        # TMDB Search ส่ง poster_path กลับมา เช่น:
+        # /abc123.jpg
+        #
+        # poster_path ยังไม่ใช่ URL ที่ browser เปิดรูปได้โดยตรง
+        # จึงต้องนำมาต่อกับ TMDB image base URL ก่อน
+        poster_path = result.get("poster_path") or ""
+
+        if poster_path:
+            # สร้าง URL เต็มสำหรับแสดง poster ใน tmdb_search.html
+            #
+            # w500 คือขนาดรูปที่เหมาะกับ Movie Card
+            result["poster_url"] = (
+                "https://image.tmdb.org/t/p/w500"
+                f"{poster_path}"
+            )
+        else:
+            # TMDB Movie บางเรื่องอาจไม่มี poster
+            #
+            # Template จะตรวจค่านี้แล้วแสดง
+            # No Poster placeholder แทน broken image
+            result["poster_url"] = ""
+
+    # ส่งคำค้น, ผลลัพธ์ และ error message ไปยัง Template
     context = {
         "query": query,
         "results": results,

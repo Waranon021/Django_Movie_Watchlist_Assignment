@@ -43,9 +43,8 @@ class Movie(models.Model):
     watched = models.BooleanField(default=False)
 
     # Django กำหนดวันและเวลาครั้งแรกที่สร้าง Movie object ให้อัตโนมัติ
-    # field นี้จะใช้เรียงหนังแบบ newest first ใน Checkpoint 3
+    # field นี้จะใช้เรียงหนังแบบ newest first ในหน้า Movie Watchlist
     date_added = models.DateTimeField(auto_now_add=True)
-
 
     # TMDB ID ใช้เชื่อม Movie ใน Local Watchlist
     # กับ Movie record ของ TMDB
@@ -64,12 +63,36 @@ class Movie(models.Model):
     # เก็บเฉพาะ poster path ที่ TMDB ส่งกลับมา
     # ตัวอย่างแนวรูปแบบ: /abc123.jpg
     #
-    # ยังไม่สร้าง URL ของรูปใน Checkpoint นี้
-    # Checkpoint 10 จะนำ path นี้ไปใช้กับ Poster UI
+    # ไม่เก็บ URL เต็มใน PostgreSQL
+    # เพราะ Checkpoint 10 จะสร้าง URL สำหรับแสดง Poster จาก path นี้
     poster_path = models.CharField(
         max_length=255,
         blank=True,
     )
+
+    @property
+    def poster_url(self):
+        """
+        สร้าง URL เต็มสำหรับ poster จาก TMDB
+
+        ใน PostgreSQL เก็บเฉพาะ poster_path เช่น /abc123.jpg
+        แทนการเก็บ URL เต็ม เพื่อไม่ผูกข้อมูลใน database
+        กับ image size หรือ URL format แบบใดแบบหนึ่ง
+
+        Movie ที่เพิ่มด้วย Manual Add หรือ Movie ที่ TMDB ไม่มี poster
+        จะคืนค่า None เพื่อให้ Template แสดง placeholder แทน
+        """
+
+        # ถ้าไม่มี poster_path ไม่ควรสร้าง URL ที่ใช้ไม่ได้
+        if not self.poster_path:
+            return None
+
+        # ใช้ TMDB image base URL ขนาด w500
+        # แล้วต่อกับ poster_path ที่เก็บไว้ใน Movie object
+        return (
+            "https://image.tmdb.org/t/p/w500"
+            f"{self.poster_path}"
+        )
 
     def __str__(self):
         """

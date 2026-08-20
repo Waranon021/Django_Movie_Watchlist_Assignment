@@ -1,173 +1,922 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "movies/base.html" %}
 
-    <title>Personal Movie Watchlist</title>
-</head>
+{% block title %}
+    Movie Watchlist
+{% endblock %}
 
-<body>
-    <main>
-        <h1>Movie Watchlist</h1>
 
-        <!--
-            Search ใช้ GET เพราะเป็นการอ่าน/filter ข้อมูลเท่านั้น
-            ไม่ได้สร้าง แก้ไข หรือลบข้อมูลใน database
+{% block content %}
 
-            เมื่อ submit browser จะสร้าง URL เช่น:
-            /?q=batman
-        -->
-        <form method="get">
-            <label for="movie-search">Search your watchlist:</label>
+<!--
+    1. Hero Section
 
-            <input type="search" id="movie-search" name="q" value="{{ query }}" placeholder="Search by movie title...">
+    ส่วนบนสุดของหน้า Home ใช้แสดงชื่อ application
+    และ action หลักที่ผู้ใช้สามารถทำได้
 
-            <button type="submit">Search</button>
+    Add Movie:
+        เพิ่ม Movie ด้วยข้อมูลที่ผู้ใช้กรอกเอง
 
-            {% if query %}
-            <a href="{% url 'movie_list' %}">Clear Search</a>
-            {% endif %}
+    Search TMDB:
+        ค้น Movie จาก TMDB API
+        แล้วเลือกเพิ่มเข้า Local Watchlist
+-->
+<section class="hero-section">
 
-        </form>
+    <div class="hero-copy">
 
         <!--
-            ใช้ชื่อ URL movie_add แทนการ hard-code path
-            Django จะหา URL จาก name="movie_add"
+            eyebrow เป็นข้อความขนาดเล็กเหนือ heading
+            ใช้ช่วยสร้างลำดับชั้นของข้อมูลใน UI
         -->
-        <p>
-            <!--
-                Add Movie คือ Manual CRUD ตาม Assignment
-
-                Search TMDB คือ additional feature
-                สำหรับค้น Movie จริงจาก TMDB แล้วเพิ่มเข้า Watchlist
-            -->
-            <a href="{% url 'movie_add' %}">
-                Add Movie
-            </a>
-
-            <a href="{% url 'tmdb_search' %}">
-                Search TMDB
-            </a>
+        <p class="eyebrow">
+            PERSONAL LIBRARY
         </p>
 
+        <h1>
+            Movie Watchlist
+        </h1>
 
-        <!-- ============================================
-             PLAN TO WATCH
-             watched=False
-             ============================================ -->
-        <section>
-            <h2>PLAN TO WATCH</h2>
-            <p>Unwatched movies in your watchlist</p>
+        <p class="hero-description">
+            Keep track of what you want to watch,
+            what you've finished, and what you thought of it.
+        </p>
+
+    </div>
+
+
+    <div class="hero-actions">
+
+        <!--
+            movie_add เป็น URL name จาก movies/urls.py
+
+            ใช้ Django URL tag แทนการเขียน path แบบ hard-code
+            เพื่อให้เปลี่ยน URL ภายหลังได้โดยไม่ต้องแก้ Template
+        -->
+        <a
+            class="button button-primary"
+            href="{% url 'movie_add' %}"
+        >
+            + Add Movie
+        </a>
+
+
+        <!--
+            TMDB Search เป็น additional feature ของ project
+
+            Browser จะเปิด Django View ก่อน
+            จากนั้น Django backend เป็นผู้เรียก TMDB API
+
+            API Read Access Token จึงไม่ถูกใส่ไว้ใน HTML
+            หรือส่งให้ JavaScript ฝั่ง browser
+        -->
+        <a
+            class="button button-secondary"
+            href="{% url 'tmdb_search' %}"
+        >
+            Search TMDB
+        </a>
+
+    </div>
+
+</section>
+
+
+
+<!--
+    2. Local Watchlist Search
+
+    Search ตรงนี้แตกต่างจาก Search TMDB
+
+    Local Search:
+        ค้นเฉพาะ Movie ที่ถูกบันทึกอยู่ใน PostgreSQL แล้ว
+
+    TMDB Search:
+        ค้นจาก external TMDB catalog
+
+    Form นี้ใช้ GET เพราะเป็นการอ่านและ filter ข้อมูลเท่านั้น
+    ไม่ได้สร้าง แก้ไข หรือลบข้อมูลใน database
+-->
+<section class="search-panel">
+
+    <div class="search-panel-copy">
+
+        <p class="section-kicker">
+            YOUR COLLECTION
+        </p>
+
+        <h2>
+            Find a movie
+        </h2>
+
+    </div>
+
+
+    <form
+        class="search-form"
+        method="get"
+    >
+
+        <!--
+            label ยังมีอยู่สำหรับ accessibility
+
+            class="sr-only" จะซ่อน label ทาง visual
+            แต่ screen reader ยังสามารถอ่านได้
+        -->
+        <label
+            class="sr-only"
+            for="movie-search"
+        >
+            Search your watchlist
+        </label>
+
+
+        <!--
+            name="q" เชื่อมกับ movie_list() ใน views.py
+
+            View อ่านค่าด้วย:
+            request.GET.get("q", "")
+
+            value จาก query ทำให้คำค้นเดิม
+            ยังคงอยู่ในช่องหลังจาก submit form
+        -->
+        <input
+            class="search-input"
+            type="search"
+            id="movie-search"
+            name="q"
+            value="{{ query }}"
+            placeholder="Search your watchlist by title..."
+        >
+
+
+        <button
+            class="button button-primary"
+            type="submit"
+        >
+            Search
+        </button>
+
+
+        {% if query %}
 
             <!--
-                plan_to_watch_movies มาจาก movie_list view
-                และมีเฉพาะ Movie ที่ watched=False
-            -->
-            {% for movie in plan_to_watch_movies %}
-                <article>
-                    <h3>{{ movie.title }}</h3>
+                ถ้ามีคำค้นอยู่จึงแสดง Clear
 
-                    <p>Release Year: {{ movie.release_year }}</p>
-                    <p>Genre: {{ movie.genre }}</p>
-                    <p>Rating: {{ movie.personal_rating }}</p>
-                    <p>Status: Unwatched</p>
-                    <p>Added: {{ movie.date_added }}</p>
+                Link นี้กลับไปยัง movie_list
+                โดยไม่มี query parameter
+                ทำให้ View กลับมาแสดง Movie ทั้งหมด
+            -->
+            <a
+                class="button button-ghost"
+                href="{% url 'movie_list' %}"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</section>
+
+
+
+{% if query %}
+
+    <!--
+        แสดงคำค้นปัจจุบันเพื่อให้ผู้ใช้รู้ว่า
+        Movie ที่เห็นด้านล่างเป็น filtered results
+        ไม่ใช่ Watchlist ทั้งหมด
+    -->
+    <div class="search-context">
+
+        Showing local watchlist results for
+
+        <strong>
+            "{{ query }}"
+        </strong>
+
+    </div>
+
+{% endif %}
+
+
+
+<!--
+    3. Plan to Watch Section
+
+    plan_to_watch_movies มาจาก movie_list() ใน views.py
+
+    View filter ด้วย:
+        watched=False
+
+    และเรียงด้วย:
+        order_by("-date_added")
+
+    ดังนั้น Movie ที่เพิ่มล่าสุดจะปรากฏก่อน
+-->
+<section
+    class="movie-section"
+    data-movie-section
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <!--
+                section-kicker เป็นข้อความรอง
+                สำหรับบอกความหมายของ section แบบสั้น
+            -->
+            <p class="section-kicker">
+                UP NEXT
+            </p>
+
+            <h2>
+                PLAN TO WATCH
+            </h2>
+
+            <p class="section-description">
+                Unwatched movies in your watchlist
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!--
+        movie-grid ใช้ CSS Grid
+
+        Desktop จะแสดงหลาย Movie ต่อแถว
+        และ CSS media queries จะลดจำนวน column
+        ตามขนาดหน้าจอ
+    -->
+    <div class="movie-grid">
+
+        {% for movie in plan_to_watch_movies %}
+
+            <!--
+                Movie object แต่ละตัวมาจาก PostgreSQL
+                ผ่าน Django ORM ใน movie_list View
+
+                data-movie-card ไม่ได้ใช้สำหรับ styling
+                แต่ใช้ให้ movie_list.js หา Movie cards
+                สำหรับระบบ Show More / Show Less
+            -->
+            <article
+                class="movie-card"
+                data-movie-card
+            >
+
+
+                <!--
+                    3.1 Movie Poster
+
+                    poster_url เป็น @property ของ Movie model
+
+                    Movie ที่ import จาก TMDB จะมี poster_path
+                    และ property จะเปลี่ยนเป็น image URL เต็ม
+
+                    Manual Movie อาจไม่มี poster_path
+                    จึงต้องมี placeholder รองรับ
+                -->
+                <div class="poster-frame">
+
+                    {% if movie.poster_url %}
+
+                        <!--
+                            loading="lazy" ช่วยให้ browser
+                            ยังไม่โหลดรูปที่อยู่นอก viewport ทันที
+
+                            เหมาะกับหน้า Watchlist
+                            ที่อาจมี Movie จำนวนมาก
+                        -->
+                        <img
+                            class="movie-poster"
+                            src="{{ movie.poster_url }}"
+                            alt="Poster for {{ movie.title }}"
+                            loading="lazy"
+                        >
+
+                    {% else %}
+
+                        <!--
+                            ถ้าไม่มี poster_url
+                            แสดง placeholder แทน broken image
+                        -->
+                        <div class="poster-placeholder">
+
+                            <span class="poster-placeholder-icon">
+                                ◇
+                            </span>
+
+                            <span>
+                                No Poster
+                            </span>
+
+                        </div>
+
+                    {% endif %}
+
 
                     <!--
-                        การเปลี่ยนสถานะเป็นการแก้ข้อมูล
-                        จึงใช้ POST form และ CSRF token
+                        Movie ใน section นี้มี watched=False
+                        จึงแสดงสถานะ Plan to Watch
+                    -->
+                    <span class="status-pill status-plan">
+                        Plan to Watch
+                    </span>
+
+                </div>
+
+
+
+                <!--
+                    3.2 Movie Information
+
+                    แสดงข้อมูลหลักที่มาจาก Movie model:
+                    title, release_year, genre,
+                    personal_rating และ date_added
+                -->
+                <div class="movie-card-body">
+
+                    <div class="movie-main-info">
+
+                        <!--
+                            title เป็น required field
+                            จึงควรมีค่าเสมอ
+                        -->
+                        <h3 class="movie-title">
+                            {{ movie.title }}
+                        </h3>
+
+
+                        <div class="movie-metadata">
+
+                            <!--
+                                release_year เป็น optional field
+
+                                ถ้าไม่มีค่าใน PostgreSQL
+                                ให้แสดงข้อความแทนการแสดง None
+                            -->
+                            {% if movie.release_year %}
+
+                                <span>
+                                    {{ movie.release_year }}
+                                </span>
+
+                            {% else %}
+
+                                <span>
+                                    Year unknown
+                                </span>
+
+                            {% endif %}
+
+
+                            <!--
+                                ใช้เป็นตัวแบ่งระหว่าง Year และ Genre
+
+                                aria-hidden ทำให้ screen reader
+                                ไม่จำเป็นต้องอ่านข้อความตกแต่งนี้
+                            -->
+                            <span
+                                class="metadata-divider"
+                                aria-hidden="true"
+                            >
+                                •
+                            </span>
+
+
+                            <!--
+                                genre สามารถเว้นว่างได้ใน Movie model
+                                จึงต้องมี fallback เช่นเดียวกับ release_year
+                            -->
+                            {% if movie.genre %}
+
+                                <span>
+                                    {{ movie.genre }}
+                                </span>
+
+                            {% else %}
+
+                                <span>
+                                    Genre not set
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!--
+                        3.3 Personal Rating
+
+                        Personal Rating เป็นคะแนน 1–5
+                        ที่ผู้ใช้ให้ Movie ด้วยตัวเอง
+
+                        ไม่ใช่ vote_average จาก TMDB
+
+                        Movie ที่ import จาก TMDB ใหม่
+                        จึงเริ่มต้น personal_rating=None
+                -->
+                    <div class="rating-block">
+
+                        <span class="rating-label">
+                            PERSONAL RATING
+                        </span>
+
+
+                        {% if movie.personal_rating %}
+
+                            <strong class="rating-value">
+                                {{ movie.personal_rating }}/5
+                            </strong>
+
+                        {% else %}
+
+                            <span class="rating-empty">
+                                Not rated
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!--
+                        date_added ถูกสร้างอัตโนมัติ
+                        ตอน Movie object ถูกเพิ่มครั้งแรก
+
+                        date filter ช่วยเปลี่ยนจาก datetime เต็ม
+                        ให้เป็นวันที่ที่อ่านง่ายบน UI
+                    -->
+                    <p class="date-added">
+                        Added {{ movie.date_added|date:"M j, Y" }}
+                    </p>
+
+                </div>
+
+
+
+                <!--
+                    3.4 Movie Actions
+
+                    ประกอบด้วย:
+                    - Mark Watched
+                    - Edit
+                    - Delete
+                -->
+                <div class="movie-card-actions">
+
+                    <!--
+                        Toggle watched เป็น operation
+                        ที่แก้ข้อมูลใน PostgreSQL
+
+                        จึงใช้ POST ไม่ใช้ GET
+
+                        CSRF token ป้องกัน Cross-Site
+                        Request Forgery ตามระบบของ Django
                     -->
                     <form
                         method="post"
                         action="{% url 'movie_toggle_watched' movie.id %}"
+                        class="card-action-form"
                     >
+
                         {% csrf_token %}
-                        <button type="submit">Mark as Watched</button>
+
+                        <button
+                            class="button button-watch"
+                            type="submit"
+                        >
+                            Mark Watched
+                        </button>
+
                     </form>
 
-                    <p>
-                        <a href="{% url 'movie_edit' movie.id %}">Edit</a>
-                        <a href="{% url 'movie_delete' movie.id %}">Delete</a>
-                    </p>
-                </article>
-
-                <hr>
-
-            {% empty %}
-            <!--
-                    ถ้ามีคำค้น แต่ไม่พบ Movie ที่ตรงกับคำค้นใน PLAN TO WATCH
-                    จะแสดงข้อความว่าการค้นหานี้ไม่พบผลลัพธ์
-
-                    ถ้าไม่มีคำค้นเลย หมายความว่า Watchlist
-                    ไม่มี Movie ที่มี watched=False อยู่จริง
-                -->
-            {% if query %}
-            <p>No unwatched movies found for "{{ query }}".</p>
-            {% else %}
-            <p>No unwatched movies in your watchlist.</p>
-            {% endif %}
-            {% endfor %}
-        </section>
-
-
-        <!-- ============================================
-             WATCHED
-             watched=True
-             ============================================ -->
-        <section>
-            <h2>WATCHED</h2>
-            <p>Movies you've watched</p>
-
-            <!--
-                watched_movies มาจาก movie_list view
-                และมีเฉพาะ Movie ที่ watched=True
-            -->
-            {% for movie in watched_movies %}
-                <article>
-                    <h3>{{ movie.title }}</h3>
-
-                    <p>Release Year: {{ movie.release_year }}</p>
-                    <p>Genre: {{ movie.genre }}</p>
-                    <p>Rating: {{ movie.personal_rating }}</p>
-                    <p>Status: Watched</p>
-                    <p>Added: {{ movie.date_added }}</p>
 
                     <!--
-                        ใช้ view เดียวกับปุ่มด้านบน
-                        เพราะ movie_toggle_watched จะสลับ Boolean ให้เอง
+                        Edit ส่ง movie.id ไปยัง movie_edit View
+
+                        View ใช้ id นี้ค้น Movie object เดิม
+                        และนำไปใส่เป็น instance ของ MovieForm
+                    -->
+                    <a
+                        class="button button-card-secondary"
+                        href="{% url 'movie_edit' movie.id %}"
+                    >
+                        Edit
+                    </a>
+
+
+                    <!--
+                        Delete link ยังไม่ได้ลบ Movie ทันที
+
+                        Link จะเปิด confirmation page ก่อน
+                        แล้ว movie_delete View จะลบจริง
+                        เฉพาะเมื่อได้รับ POST
+                    -->
+                    <a
+                        class="button button-danger-ghost"
+                        href="{% url 'movie_delete' movie.id %}"
+                    >
+                        Delete
+                    </a>
+
+                </div>
+
+            </article>
+
+
+        {% empty %}
+
+            <!--
+                ถ้า QuerySet ไม่มี Movie
+                Django จะเข้ามาแสดง Empty State ตรงนี้
+
+                ข้อความจะแตกต่างกันระหว่าง:
+                - กำลัง Search แล้วไม่พบ
+                - Watchlist ยังไม่มี unwatched Movie จริง
+            -->
+            <div class="empty-state">
+
+                {% if query %}
+
+                    <h3>
+                        No planned movies found
+                    </h3>
+
+                    <p>
+                        No unwatched movies match "{{ query }}".
+                    </p>
+
+                {% else %}
+
+                    <h3>
+                        Your plan is empty
+                    </h3>
+
+                    <p>
+                        Add a movie manually or search TMDB
+                        to start building your watchlist.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+
+    <!--
+        3.5 Show More / Show Less
+
+        ปุ่มเริ่มต้นมี hidden
+        เพราะยังไม่รู้ว่า section มี Movie กี่เรื่อง
+
+        movie_list.js จะนับ data-movie-card
+
+        ถ้ามากกว่า 8:
+            แสดง 8 cards แรก
+            และเปิด Show More button
+
+        ถ้าไม่เกิน 8:
+            ปุ่มจะยังคงถูกซ่อน
+    -->
+    <div class="show-more-container">
+
+        <button
+            class="button button-secondary show-more-button"
+            type="button"
+            data-show-more
+            aria-expanded="false"
+            hidden
+        >
+            Show More
+        </button>
+
+    </div>
+
+</section>
+
+
+
+<!--
+    4. Watched Section
+
+    watched_movies มาจาก movie_list() View เช่นเดียวกัน
+
+    แต่ View filter ด้วย:
+        watched=True
+
+    Movie card ใช้โครงสร้างใกล้เคียงกับ Plan to Watch
+    เพื่อให้ UI มีความสม่ำเสมอ
+-->
+<section
+    class="movie-section"
+    data-movie-section
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="section-kicker">
+                COMPLETED
+            </p>
+
+            <h2>
+                WATCHED
+            </h2>
+
+            <p class="section-description">
+                Movies you've watched
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="movie-grid">
+
+        {% for movie in watched_movies %}
+
+            <article
+                class="movie-card"
+                data-movie-card
+            >
+
+
+                <!--
+                    4.1 Poster
+
+                    ใช้ Movie.poster_url property
+                    แบบเดียวกับ Plan to Watch
+                -->
+                <div class="poster-frame">
+
+                    {% if movie.poster_url %}
+
+                        <img
+                            class="movie-poster"
+                            src="{{ movie.poster_url }}"
+                            alt="Poster for {{ movie.title }}"
+                            loading="lazy"
+                        >
+
+                    {% else %}
+
+                        <div class="poster-placeholder">
+
+                            <span class="poster-placeholder-icon">
+                                ◇
+                            </span>
+
+                            <span>
+                                No Poster
+                            </span>
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!--
+                        Movie ใน section นี้มี watched=True
+                    -->
+                    <span class="status-pill status-watched">
+                        Watched
+                    </span>
+
+                </div>
+
+
+
+                <!--
+                    4.2 Movie Information
+                -->
+                <div class="movie-card-body">
+
+                    <div class="movie-main-info">
+
+                        <h3 class="movie-title">
+                            {{ movie.title }}
+                        </h3>
+
+
+                        <div class="movie-metadata">
+
+                            {% if movie.release_year %}
+
+                                <span>
+                                    {{ movie.release_year }}
+                                </span>
+
+                            {% else %}
+
+                                <span>
+                                    Year unknown
+                                </span>
+
+                            {% endif %}
+
+
+                            <span
+                                class="metadata-divider"
+                                aria-hidden="true"
+                            >
+                                •
+                            </span>
+
+
+                            {% if movie.genre %}
+
+                                <span>
+                                    {{ movie.genre }}
+                                </span>
+
+                            {% else %}
+
+                                <span>
+                                    Genre not set
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!--
+                        Personal Rating ยังใช้ข้อมูลจากผู้ใช้เอง
+                        ไม่เกี่ยวกับคะแนนของ TMDB
+                    -->
+                    <div class="rating-block">
+
+                        <span class="rating-label">
+                            PERSONAL RATING
+                        </span>
+
+
+                        {% if movie.personal_rating %}
+
+                            <strong class="rating-value">
+                                {{ movie.personal_rating }}/5
+                            </strong>
+
+                        {% else %}
+
+                            <span class="rating-empty">
+                                Not rated
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <p class="date-added">
+                        Added {{ movie.date_added|date:"M j, Y" }}
+                    </p>
+
+                </div>
+
+
+
+                <!--
+                    4.3 Movie Actions
+
+                    Watched Movie ใช้ toggle View ตัวเดิม
+                    แต่ปุ่มเปลี่ยนข้อความเป็น Mark Unwatched
+                -->
+                <div class="movie-card-actions">
+
+                    <!--
+                        movie_toggle_watched() ใช้:
+
+                        movie.watched = not movie.watched
+
+                        ตอนนี้ค่าคือ True
+                        ดังนั้นเมื่อ submit จะเปลี่ยนกลับเป็น False
                     -->
                     <form
                         method="post"
                         action="{% url 'movie_toggle_watched' movie.id %}"
+                        class="card-action-form"
                     >
+
                         {% csrf_token %}
-                        <button type="submit">Mark as Unwatched</button>
+
+                        <button
+                            class="button button-unwatch"
+                            type="submit"
+                        >
+                            Mark Unwatched
+                        </button>
+
                     </form>
 
-                    <p>
-                        <a href="{% url 'movie_edit' movie.id %}">Edit</a>
-                        <a href="{% url 'movie_delete' movie.id %}">Delete</a>
-                    </p>
-                </article>
 
-                <hr>
+                    <a
+                        class="button button-card-secondary"
+                        href="{% url 'movie_edit' movie.id %}"
+                    >
+                        Edit
+                    </a>
 
-            {% empty %}
+
+                    <a
+                        class="button button-danger-ghost"
+                        href="{% url 'movie_delete' movie.id %}"
+                    >
+                        Delete
+                    </a>
+
+                </div>
+
+            </article>
+
+
+        {% empty %}
+
             <!--
-                    ถ้ามีคำค้น แต่ไม่พบ Movie ที่ตรงกับคำค้นใน WATCHED
-                    จะแสดงข้อความว่าการค้นหานี้ไม่พบผลลัพธ์
+                Watched section มี Empty State ของตัวเอง
 
-                    ถ้าไม่มีคำค้นเลย หมายความว่ายังไม่มี Movie
-                    ที่มี watched=True อยู่ใน Watchlist
-                -->
-            {% if query %}
-            <p>No watched movies found for "{{ query }}".</p>
-            {% else %}
-            <p>No watched movies yet.</p>
-            {% endif %}
-            {% endfor %}
-        </section>
-    </main>
-</body>
-</html>
+                ถ้ามี Local Search:
+                    หมายถึงไม่พบ watched Movie ตามคำค้น
+
+                ถ้าไม่มี Search:
+                    หมายถึงยังไม่มี Movie ที่ watched=True
+            -->
+            <div class="empty-state">
+
+                {% if query %}
+
+                    <h3>
+                        No watched movies found
+                    </h3>
+
+                    <p>
+                        No watched movies match "{{ query }}".
+                    </p>
+
+                {% else %}
+
+                    <h3>
+                        Nothing watched yet
+                    </h3>
+
+                    <p>
+                        Movies marked as watched will appear here.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+
+    <!--
+        Watched section มี Show More ของตัวเอง
+
+        JavaScript จะจัดการแต่ละ data-movie-section
+        แยกจากกัน
+
+        ตัวอย่าง:
+        Plan to Watch มี 12 เรื่อง
+        Watched มี 4 เรื่อง
+
+        จะมี Show More เฉพาะ Plan to Watch
+    -->
+    <div class="show-more-container">
+
+        <button
+            class="button button-secondary show-more-button"
+            type="button"
+            data-show-more
+            aria-expanded="false"
+            hidden
+        >
+            Show More
+        </button>
+
+    </div>
+
+</section>
+
+{% endblock %}

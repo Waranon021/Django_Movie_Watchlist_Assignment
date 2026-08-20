@@ -1,0 +1,1867 @@
+/*
+ * 1. Design Tokens
+ *
+ * CSS variables เก็บค่าที่ถูกใช้ซ้ำหลายจุด
+ * เช่น สี spacing และ border radius
+ *
+ * ข้อดีคือถ้าต้องการเปลี่ยน theme ภายหลัง
+ * ไม่จำเป็นต้องตามแก้ทุก selector ทีละจุด
+ *
+ * Palette หลักอิงจาก Astral design reference:
+ * - Purple เป็น Primary
+ * - Orange เป็น Accent
+ * - Dark Background
+ * - Dark Surface สำหรับ Cards
+ */
+
+:root {
+    --color-primary: #c084fc;
+    --color-primary-strong: #a855f7;
+    --color-primary-soft: rgba(192, 132, 252, 0.12);
+
+    --color-secondary: #0a0a14;
+    --color-accent: #fb923c;
+
+    --color-background: #03000a;
+    --color-surface: #18181b;
+    --color-surface-soft: #111118;
+    --color-surface-hover: #202026;
+
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #a1a1aa;
+    --color-text-muted: #71717a;
+
+    --color-border: #27272a;
+    --color-border-light: #3f3f46;
+
+    --color-success: #86efac;
+    --color-success-bg: rgba(134, 239, 172, 0.10);
+
+    --color-danger: #f87171;
+    --color-danger-bg: rgba(248, 113, 113, 0.10);
+
+    --radius-card: 16px;
+    --radius-control: 8px;
+    --radius-pill: 9999px;
+
+    --space-1: 8px;
+    --space-2: 16px;
+    --space-3: 24px;
+    --space-4: 32px;
+    --space-5: 48px;
+    --space-section: 80px;
+
+    --page-width: 1280px;
+}
+
+
+
+/*
+ * 2. Global Styles
+ *
+ * box-sizing: border-box ทำให้ width/height
+ * รวม padding และ border ไว้ด้วย
+ *
+ * ช่วยให้คำนวณ layout ง่ายขึ้น
+ * โดยเฉพาะ Card และ responsive grid
+ */
+
+* {
+    box-sizing: border-box;
+}
+
+
+html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+}
+
+
+body {
+    margin: 0;
+
+    min-height: 100vh;
+
+    /*
+     * ใช้ radial gradients แบบเบา
+     * เพื่อให้ Background มี depth
+     * โดยยังรักษา dark theme เป็นหลัก
+     */
+    background:
+        radial-gradient(
+            circle at 50% -10%,
+            rgba(192, 132, 252, 0.16),
+            transparent 34rem
+        ),
+        radial-gradient(
+            circle at 90% 20%,
+            rgba(251, 146, 60, 0.05),
+            transparent 28rem
+        ),
+        var(--color-background);
+
+    color: var(--color-text-primary);
+
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    line-height: 1.6;
+}
+
+
+/*
+ * ทำให้ form controls ใช้ font
+ * เดียวกับหน้าเว็บหลัก
+ */
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+a {
+    color: inherit;
+}
+
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+
+
+/*
+ * 3. Accessibility Helpers
+ *
+ * sr-only ซ่อน element ออกจากหน้าจอ
+ * แต่ไม่ซ่อนจาก screen reader
+ *
+ * ใช้กับ label ของ Search input
+ * ที่ไม่จำเป็นต้องมองเห็นทาง visual
+ */
+
+.sr-only {
+    position: absolute;
+
+    width: 1px;
+    height: 1px;
+
+    padding: 0;
+    margin: -1px;
+
+    overflow: hidden;
+
+    clip: rect(0, 0, 0, 0);
+
+    white-space: nowrap;
+
+    border: 0;
+}
+
+
+
+/*
+ * 4. Main Page Layout
+ *
+ * page-container อยู่ใน base.html
+ * และครอบ content ของทุก Child Template
+ *
+ * max width ป้องกันไม่ให้ content
+ * กว้างเกินไปบน monitor ขนาดใหญ่
+ */
+
+.page-container {
+    width: min(
+        calc(100% - 32px),
+        var(--page-width)
+    );
+
+    margin-inline: auto;
+
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-section);
+}
+
+
+
+/*
+ * 5. Navigation
+ *
+ * Navigation อยู่ใน base.html
+ * จึงใช้ร่วมกันทุกหน้า
+ *
+ * position: sticky ช่วยให้ Navigation
+ * ยังอยู่ด้านบนเมื่อผู้ใช้ scroll ลงไป
+ */
+
+.site-header {
+    position: sticky;
+    top: 0;
+
+    z-index: 100;
+
+    border-bottom:
+        1px solid rgba(63, 63, 70, 0.65);
+
+    background: rgba(3, 0, 10, 0.82);
+
+    backdrop-filter: blur(18px);
+}
+
+
+.site-nav {
+    width: min(
+        calc(100% - 32px),
+        var(--page-width)
+    );
+
+    min-height: 68px;
+
+    margin-inline: auto;
+
+    display: grid;
+
+    /*
+     * 3 columns ช่วยให้ Navigation links
+     * อยู่ตรงกลางได้แม้มี Brand ด้านซ้าย
+     */
+    grid-template-columns: 1fr auto 1fr;
+
+    align-items: center;
+
+    gap: var(--space-3);
+}
+
+
+.site-brand {
+    width: 38px;
+    height: 38px;
+
+    display: grid;
+    place-items: center;
+
+    border:
+        1px solid rgba(192, 132, 252, 0.34);
+
+    border-radius: 10px;
+
+    background:
+        rgba(192, 132, 252, 0.10);
+
+    color: var(--color-primary);
+
+    font-weight: 800;
+    font-size: 0.82rem;
+
+    text-decoration: none;
+}
+
+
+.nav-links {
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    gap: var(--space-4);
+}
+
+
+.nav-link {
+    color: var(--color-text-secondary);
+
+    font-size: 0.92rem;
+    font-weight: 500;
+
+    text-decoration: none;
+
+    transition:
+        color 160ms ease,
+        opacity 160ms ease;
+}
+
+
+a.nav-link:hover {
+    color: var(--color-text-primary);
+}
+
+
+/*
+ * About และ Contact ยังไม่สร้างจริง
+ * จนถึง Checkpoint 11
+ *
+ * จึงแสดงเป็น disabled visual state ก่อน
+ */
+.nav-link-disabled {
+    cursor: default;
+    opacity: 0.38;
+}
+
+
+
+/*
+ * 6. Typography
+ *
+ * Heading ใช้ responsive font size
+ * ผ่าน clamp()
+ *
+ * ทำให้ font ไม่เล็กเกินบน Desktop
+ * และไม่ใหญ่จนล้นบน Mobile
+ */
+
+h1,
+h2,
+h3,
+p {
+    margin-top: 0;
+}
+
+
+h1 {
+    margin-bottom: var(--space-2);
+
+    font-size: clamp(
+        2.4rem,
+        6vw,
+        4.8rem
+    );
+
+    line-height: 1.03;
+    letter-spacing: -0.055em;
+}
+
+
+h2 {
+    margin-bottom: var(--space-1);
+
+    font-size: clamp(
+        1.7rem,
+        3vw,
+        2.35rem
+    );
+
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+}
+
+
+h3 {
+    line-height: 1.25;
+}
+
+
+/*
+ * eyebrow และ kicker ใช้ช่วยสร้าง hierarchy
+ * ก่อน heading หลัก
+ */
+.eyebrow,
+.section-kicker,
+.rating-label {
+    color: var(--color-primary);
+
+    font-size: 0.72rem;
+    font-weight: 700;
+
+    letter-spacing: 0.13em;
+
+    text-transform: uppercase;
+}
+
+
+.eyebrow {
+    margin-bottom: var(--space-2);
+}
+
+
+.section-kicker {
+    margin-bottom: var(--space-1);
+}
+
+
+.hero-description,
+.section-description,
+.confirm-description {
+    color: var(--color-text-secondary);
+}
+
+
+.text-muted {
+    color: var(--color-text-muted);
+}
+
+
+
+/*
+ * 7. Hero Sections
+ *
+ * hero-section ใช้บน Home
+ *
+ * subpage-hero ใช้กับหน้าเช่น TMDB Search
+ * ที่ไม่ต้องการพื้นที่ขนาดใหญ่เท่า Home
+ */
+
+.hero-section {
+    min-height: 390px;
+
+    display: flex;
+
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: var(--space-5);
+
+    padding:
+        56px
+        0
+        64px;
+}
+
+
+.hero-copy {
+    max-width: 740px;
+}
+
+
+.hero-description {
+    max-width: 620px;
+
+    margin-bottom: 0;
+
+    font-size: 1.05rem;
+}
+
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: var(--space-2);
+
+    padding-bottom: 8px;
+}
+
+
+.subpage-hero {
+    max-width: 760px;
+
+    padding:
+        56px
+        0
+        48px;
+}
+
+
+
+/*
+ * 8. Buttons
+ *
+ * .button เป็น base style
+ * แล้ว variant ต่าง ๆ เพิ่มสีและความหมาย
+ *
+ * ตัวอย่าง:
+ * .button-primary
+ * .button-secondary
+ * .button-danger
+ */
+
+.button {
+    min-height: 42px;
+
+    padding:
+        9px
+        16px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+
+    cursor: pointer;
+
+    font-weight: 600;
+    font-size: 0.88rem;
+
+    line-height: 1;
+
+    text-decoration: none;
+
+    transition:
+        transform 150ms ease,
+        background 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease;
+}
+
+
+.button:hover {
+    transform: translateY(-1px);
+}
+
+
+.button:active {
+    transform: translateY(0);
+}
+
+
+.button-primary {
+    border-color: var(--color-primary);
+
+    background: var(--color-primary);
+
+    color: #13061e;
+}
+
+
+.button-primary:hover {
+    border-color: #d8b4fe;
+    background: #d8b4fe;
+}
+
+
+.button-secondary {
+    border-color: var(--color-border-light);
+
+    background: var(--color-surface);
+
+    color: var(--color-text-primary);
+}
+
+
+.button-secondary:hover {
+    border-color: var(--color-primary);
+
+    background: var(--color-surface-hover);
+}
+
+
+.button-ghost {
+    border-color: transparent;
+
+    background: transparent;
+
+    color: var(--color-text-secondary);
+}
+
+
+.button-ghost:hover {
+    color: var(--color-primary);
+}
+
+
+/*
+ * Mark Watched ใช้ Purple
+ * เพราะเป็น action หลักของ Plan to Watch
+ */
+.button-watch {
+    width: 100%;
+
+    border-color:
+        rgba(192, 132, 252, 0.32);
+
+    background: var(--color-primary-soft);
+
+    color: #e9d5ff;
+}
+
+
+.button-watch:hover {
+    border-color: var(--color-primary);
+
+    background:
+        rgba(192, 132, 252, 0.18);
+}
+
+
+/*
+ * Mark Unwatched ใช้ Green tint
+ * เพื่อแตกต่างจาก action ของ Movie ที่ยังไม่ดู
+ */
+.button-unwatch {
+    width: 100%;
+
+    border-color:
+        rgba(134, 239, 172, 0.28);
+
+    background: var(--color-success-bg);
+
+    color: var(--color-success);
+}
+
+
+.button-card-secondary {
+    border-color: var(--color-border);
+
+    background: transparent;
+
+    color: var(--color-text-secondary);
+}
+
+
+.button-card-secondary:hover {
+    border-color: var(--color-border-light);
+
+    color: var(--color-text-primary);
+}
+
+
+.button-danger-ghost {
+    border-color: transparent;
+
+    background: transparent;
+
+    color: #fca5a5;
+}
+
+
+.button-danger-ghost:hover {
+    background: var(--color-danger-bg);
+}
+
+
+.button-danger {
+    border-color: #ef4444;
+
+    background: #ef4444;
+
+    color: white;
+}
+
+
+.button-danger:hover {
+    border-color: #f87171;
+
+    background: #f87171;
+}
+
+
+.button-full {
+    width: 100%;
+}
+
+
+
+/*
+ * 9. Search Panel
+ *
+ * ใช้ทั้ง Local Search และ TMDB Search
+ *
+ * การใช้ component style เดียวกัน
+ * ทำให้ UI มีความสม่ำเสมอ
+ */
+
+.search-panel {
+    margin-bottom: 64px;
+
+    padding: var(--space-3);
+
+    display: flex;
+
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: var(--space-4);
+
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(192, 132, 252, 0.06),
+            transparent 45%
+        ),
+        rgba(24, 24, 27, 0.74);
+}
+
+
+.search-panel-copy h2 {
+    margin-bottom: 0;
+
+    font-size: 1.35rem;
+}
+
+
+.search-form {
+    width: min(100%, 680px);
+
+    display: flex;
+
+    gap: var(--space-1);
+}
+
+
+.search-form-wide {
+    width: 100%;
+}
+
+
+.search-input {
+    min-width: 0;
+
+    flex: 1;
+
+    height: 44px;
+
+    padding:
+        0
+        14px;
+
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+
+    outline: none;
+
+    background: rgba(3, 0, 10, 0.72);
+
+    color: var(--color-text-primary);
+
+    transition:
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+
+.search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+
+.search-input:focus {
+    border-color: var(--color-primary);
+
+    box-shadow:
+        0
+        0
+        0
+        3px rgba(192, 132, 252, 0.10);
+}
+
+
+.search-context {
+    margin:
+        -40px
+        0
+        56px;
+
+    color: var(--color-text-secondary);
+
+    font-size: 0.9rem;
+}
+
+
+.search-context strong {
+    color: var(--color-primary);
+}
+
+
+
+/*
+ * 10. Movie Sections
+ *
+ * movie-section ใช้ทั้ง PLAN TO WATCH และ WATCHED
+ *
+ * scroll-margin-top ช่วยให้เวลา JavaScript
+ * เลื่อนกลับมายัง section แล้วไม่ถูก Sticky Navigation บัง
+ */
+
+.movie-section {
+    scroll-margin-top: 90px;
+
+    margin-bottom: var(--space-section);
+}
+
+
+.section-heading {
+    margin-bottom: var(--space-3);
+
+    display: flex;
+
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: var(--space-3);
+}
+
+
+.section-description {
+    margin-bottom: 0;
+}
+
+
+
+/*
+ * 11. Local Movie Grid
+ *
+ * Desktop แสดง 4 columns
+ *
+ * จำนวน columns จะถูกลดลง
+ * ใน Responsive Media Queries ด้านล่าง
+ */
+
+.movie-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: var(--space-2);
+}
+
+
+
+/*
+ * 12. Movie Card
+ *
+ * Movie Card ประกอบด้วย:
+ * - Poster
+ * - Status
+ * - Movie Information
+ * - Personal Rating
+ * - Actions
+ */
+
+.movie-card {
+    min-width: 0;
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.015),
+            transparent 30%
+        ),
+        var(--color-surface);
+
+    transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        background 180ms ease;
+}
+
+
+.movie-card:hover {
+    transform: translateY(-3px);
+
+    border-color: var(--color-border-light);
+
+    background: var(--color-surface-hover);
+}
+
+
+
+/*
+ * 12.1 Poster
+ *
+ * aspect-ratio 2 / 3 ใกล้เคียงกับ
+ * Movie poster รูปแบบมาตรฐาน
+ *
+ * ทำให้ Card ทุกใบมี Poster frame
+ * ขนาดสม่ำเสมอแม้บาง Movie ไม่มีรูป
+ */
+
+.poster-frame {
+    position: relative;
+
+    aspect-ratio: 2 / 3;
+
+    overflow: hidden;
+
+    background: var(--color-surface-soft);
+}
+
+
+.movie-poster {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    transition: transform 300ms ease;
+}
+
+
+.movie-card:hover .movie-poster,
+.tmdb-card:hover .movie-poster {
+    transform: scale(1.025);
+}
+
+
+/*
+ * Placeholder ใช้กับ:
+ * - Manual Movie
+ * - TMDB Movie ที่ไม่มี poster
+ */
+.poster-placeholder {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(192, 132, 252, 0.08),
+            transparent 55%
+        ),
+        var(--color-surface-soft);
+
+    color: var(--color-text-muted);
+
+    font-size: 0.82rem;
+}
+
+
+.poster-placeholder-icon {
+    color: var(--color-primary);
+
+    font-size: 2rem;
+}
+
+
+
+/*
+ * 12.2 Status Pills
+ *
+ * position absolute ทำให้ status
+ * วางซ้อนบน Poster ได้
+ */
+
+.status-pill {
+    position: absolute;
+
+    top: 12px;
+    left: 12px;
+
+    padding:
+        5px
+        9px;
+
+    border-radius: var(--radius-pill);
+
+    backdrop-filter: blur(10px);
+
+    font-size: 0.68rem;
+    font-weight: 700;
+
+    letter-spacing: 0.04em;
+
+    text-transform: uppercase;
+}
+
+
+.status-plan {
+    border:
+        1px solid rgba(192, 132, 252, 0.42);
+
+    background: rgba(20, 8, 32, 0.82);
+
+    color: #e9d5ff;
+}
+
+
+.status-watched {
+    border:
+        1px solid rgba(134, 239, 172, 0.35);
+
+    background: rgba(8, 32, 17, 0.82);
+
+    color: var(--color-success);
+}
+
+
+
+/*
+ * 12.3 Movie Information
+ */
+
+.movie-card-body {
+    padding: var(--space-2);
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+.movie-main-info {
+    min-height: 82px;
+}
+
+
+/*
+ * จำกัด Movie title ไว้ประมาณ 2 บรรทัด
+ * เพื่อให้ Cards ในแถวเดียวกัน
+ * มีความสูงใกล้เคียงกัน
+ */
+.movie-title {
+    margin-bottom: 7px;
+
+    overflow: hidden;
+
+    color: var(--color-text-primary);
+
+    font-size: 1.03rem;
+
+    display: -webkit-box;
+
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+
+.movie-metadata {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    color: var(--color-text-secondary);
+
+    font-size: 0.78rem;
+}
+
+
+.metadata-divider {
+    color: var(--color-border-light);
+}
+
+
+
+/*
+ * 12.4 Personal Rating
+ *
+ * Orange accent ช่วยแยก Rating
+ * จาก Metadata ทั่วไป
+ */
+
+.rating-block {
+    margin-top: var(--space-2);
+
+    padding-top: var(--space-2);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: var(--space-1);
+
+    border-top: 1px solid var(--color-border);
+}
+
+
+.rating-label {
+    margin: 0;
+
+    color: var(--color-text-muted);
+
+    font-size: 0.62rem;
+}
+
+
+.rating-value {
+    color: var(--color-accent);
+
+    font-family:
+        "JetBrains Mono",
+        ui-monospace,
+        SFMono-Regular,
+        Consolas,
+        monospace;
+}
+
+
+.rating-empty {
+    color: var(--color-text-muted);
+
+    font-size: 0.82rem;
+}
+
+
+.date-added {
+    margin:
+        var(--space-2)
+        0
+        0;
+
+    color: var(--color-text-muted);
+
+    font-size: 0.72rem;
+}
+
+
+
+/*
+ * 12.5 Movie Actions
+ *
+ * Grid ทำให้ Mark Watched ใช้พื้นที่หลัก
+ * ส่วน Edit/Delete เป็น action รอง
+ */
+
+.movie-card-actions {
+    padding:
+        0
+        var(--space-2)
+        var(--space-2);
+
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        auto
+        auto;
+
+    gap: 6px;
+}
+
+
+.card-action-form {
+    min-width: 0;
+
+    margin: 0;
+}
+
+
+
+/*
+ * 13. Show More / Show Less
+ *
+ * movie-card-hidden ถูกเพิ่มและลบ
+ * โดย movie_list.js
+ *
+ * Django ไม่ได้ใช้ class นี้
+ * และ Database ไม่ได้รับผลกระทบ
+ */
+
+.movie-card-hidden {
+    display: none;
+}
+
+
+.show-more-container {
+    margin-top: var(--space-4);
+
+    display: flex;
+    justify-content: center;
+}
+
+
+
+/*
+ * 14. Empty State
+ *
+ * Empty State ใช้แทนพื้นที่ของ Movie Grid
+ * เมื่อ QuerySet ไม่มี Movie
+ *
+ * grid-column ทำให้กินพื้นที่ทุก column
+ */
+
+.empty-state {
+    grid-column: 1 / -1;
+
+    min-height: 190px;
+
+    padding: var(--space-4);
+
+    display: flex;
+
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    border:
+        1px dashed var(--color-border-light);
+
+    border-radius: var(--radius-card);
+
+    background:
+        rgba(24, 24, 27, 0.42);
+}
+
+
+.empty-state h3 {
+    margin-bottom: 6px;
+}
+
+
+.empty-state p {
+    max-width: 440px;
+
+    margin-bottom: 0;
+
+    color: var(--color-text-secondary);
+}
+
+
+
+/*
+ * 15. TMDB Search Grid
+ *
+ * TMDB Search ใช้ 5 columns บน Desktop
+ * เพราะ Card มีข้อมูลสั้นกว่า Local Movie Card เล็กน้อย
+ */
+
+.tmdb-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
+    gap: var(--space-2);
+}
+
+
+.tmdb-card {
+    min-width: 0;
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+
+    background: var(--color-surface);
+
+    transition:
+        transform 180ms ease,
+        border-color 180ms ease;
+}
+
+
+.tmdb-card:hover {
+    transform: translateY(-3px);
+
+    border-color: var(--color-border-light);
+}
+
+
+.tmdb-card-body {
+    padding: var(--space-2);
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+.tmdb-overview {
+    margin:
+        var(--space-2)
+        0;
+
+    flex: 1;
+
+    color: var(--color-text-secondary);
+
+    font-size: 0.82rem;
+
+    line-height: 1.55;
+}
+
+
+.already-added {
+    margin-top: auto;
+
+    min-height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid rgba(134, 239, 172, 0.22);
+
+    border-radius: var(--radius-control);
+
+    background: var(--color-success-bg);
+
+    color: var(--color-success);
+
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+
+
+/*
+ * 16. Add / Edit Form
+ *
+ * form-page จำกัดความกว้าง
+ * เพื่อไม่ให้ Form ยืดเต็ม Desktop
+ */
+
+.form-page {
+    max-width: 720px;
+
+    margin-inline: auto;
+
+    padding-top: 56px;
+}
+
+
+.form-intro {
+    margin-bottom: var(--space-4);
+}
+
+
+.form-card {
+    padding: var(--space-4);
+
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+
+    background:
+        rgba(24, 24, 27, 0.82);
+}
+
+
+.movie-form {
+    display: flex;
+    flex-direction: column;
+
+    gap: var(--space-3);
+}
+
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.form-field label {
+    color: var(--color-text-secondary);
+
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+
+/*
+ * :not([type="checkbox"])
+ * ป้องกันไม่ให้ Checkbox ถูกยืด
+ * width: 100% เหมือน Text input
+ */
+.form-field input:not([type="checkbox"]),
+.form-field select,
+.form-field textarea {
+    width: 100%;
+
+    min-height: 44px;
+
+    padding:
+        9px
+        12px;
+
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+
+    outline: none;
+
+    background: var(--color-background);
+
+    color: var(--color-text-primary);
+}
+
+
+.form-field input:not([type="checkbox"]):focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    border-color: var(--color-primary);
+
+    box-shadow:
+        0
+        0
+        0
+        3px var(--color-primary-soft);
+}
+
+
+.form-field input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+
+    accent-color: var(--color-primary);
+}
+
+
+.field-help {
+    color: var(--color-text-muted);
+}
+
+
+.field-errors,
+.errorlist {
+    margin:
+        4px
+        0
+        0;
+
+    padding: 0;
+
+    list-style: none;
+
+    color: #fca5a5;
+
+    font-size: 0.82rem;
+}
+
+
+.form-actions {
+    margin-top: var(--space-1);
+
+    display: flex;
+
+    gap: var(--space-1);
+}
+
+
+
+/*
+ * 17. Delete Confirmation
+ *
+ * confirmation page ใช้ layout ที่เรียบกว่า
+ * เพราะมี decision หลักเพียง Delete หรือ Cancel
+ */
+
+.confirm-page {
+    min-height: 65vh;
+
+    display: grid;
+    place-items: center;
+}
+
+
+.confirm-card {
+    width: min(100%, 580px);
+
+    padding: 40px;
+
+    border:
+        1px solid rgba(248, 113, 113, 0.25);
+
+    border-radius: var(--radius-card);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(248, 113, 113, 0.04),
+            transparent 40%
+        ),
+        var(--color-surface);
+
+    text-align: center;
+}
+
+
+.danger-icon {
+    width: 48px;
+    height: 48px;
+
+    margin:
+        0
+        auto
+        var(--space-3);
+
+    display: grid;
+    place-items: center;
+
+    border:
+        1px solid rgba(248, 113, 113, 0.35);
+
+    border-radius: 50%;
+
+    background: var(--color-danger-bg);
+
+    color: var(--color-danger);
+
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+
+.danger-text {
+    color: var(--color-danger);
+}
+
+
+.confirm-card h1 {
+    font-size: clamp(
+        1.8rem,
+        5vw,
+        2.6rem
+    );
+
+    letter-spacing: -0.04em;
+}
+
+
+.confirm-description {
+    margin-bottom: var(--space-4);
+}
+
+
+.confirm-actions {
+    display: flex;
+    justify-content: center;
+
+    gap: var(--space-1);
+}
+
+
+
+/*
+ * 18. Messages และ Page Footer Actions
+ */
+
+.message-box {
+    margin-bottom: var(--space-3);
+
+    padding:
+        12px
+        14px;
+
+    border-radius: var(--radius-control);
+
+    font-size: 0.86rem;
+}
+
+
+.message-error {
+    border:
+        1px solid rgba(248, 113, 113, 0.32);
+
+    background: var(--color-danger-bg);
+
+    color: #fecaca;
+}
+
+
+.page-footer-action {
+    margin-top: var(--space-4);
+}
+
+
+
+/*
+ * 19. Responsive Layout - Medium Screen
+ *
+ * ตัวอย่าง Laptop window ที่ถูกย่อ
+ * หรือ Tablet แนวนอน
+ */
+
+@media (max-width: 1050px) {
+
+    .movie-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+
+    .tmdb-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+
+    .hero-section {
+        min-height: auto;
+
+        align-items: flex-start;
+        flex-direction: column;
+
+        padding:
+            64px
+            0;
+    }
+
+
+    .search-panel {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+    .search-form {
+        width: 100%;
+    }
+}
+
+
+
+/*
+ * 20. Responsive Layout - Tablet
+ */
+
+@media (max-width: 760px) {
+
+    :root {
+        --space-section: 64px;
+    }
+
+
+    .page-container {
+        width: min(
+            calc(100% - 24px),
+            var(--page-width)
+        );
+
+        padding-top: 32px;
+    }
+
+
+    .site-nav {
+        width: calc(100% - 24px);
+
+        grid-template-columns:
+            auto
+            1fr;
+
+        gap: var(--space-2);
+    }
+
+
+    .nav-links {
+        justify-content: flex-end;
+
+        gap: var(--space-2);
+    }
+
+
+    /*
+     * Desktop ใช้ spacer เพื่อช่วยจัด Navigation
+     * แต่ Mobile ไม่จำเป็นต้องใช้
+     */
+    .nav-spacer {
+        display: none;
+    }
+
+
+    .hero-section {
+        padding:
+            40px
+            0
+            52px;
+    }
+
+
+    h1 {
+        font-size: clamp(
+            2.4rem,
+            12vw,
+            3.6rem
+        );
+    }
+
+
+    .movie-grid,
+    .tmdb-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+
+    .search-form {
+        flex-wrap: wrap;
+    }
+
+
+    /*
+     * Search input กินทั้งแถวก่อน
+     * แล้ว Buttons อยู่ด้านล่างได้
+     */
+    .search-input {
+        flex-basis: 100%;
+    }
+
+
+    .form-card,
+    .confirm-card {
+        padding: var(--space-3);
+    }
+}
+
+
+
+/*
+ * 21. Responsive Layout - Mobile
+ *
+ * ยังคง 2 Movie Cards ต่อแถว
+ * เพื่อใช้พื้นที่หน้าจอให้คุ้ม
+ *
+ * แต่ลด padding/font บางส่วน
+ * เพื่อไม่ให้ Card แน่นเกินไป
+ */
+
+@media (max-width: 500px) {
+
+    /*
+     * About และ Contact ยังไม่ได้เปิดใช้งาน
+     * จึงซ่อนบนจอเล็กเพื่อประหยัดพื้นที่
+     */
+    .nav-link-disabled {
+        display: none;
+    }
+
+
+    .hero-actions {
+        width: 100%;
+    }
+
+
+    .hero-actions .button {
+        flex: 1;
+    }
+
+
+    .movie-grid,
+    .tmdb-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 10px;
+    }
+
+
+    .movie-card-body,
+    .tmdb-card-body {
+        padding: 12px;
+    }
+
+
+    /*
+     * Mobile ให้ Mark Watched / Unwatched
+     * กินทั้งแถว
+     *
+     * Edit และ Delete อยู่แถวถัดไป
+     */
+    .movie-card-actions {
+        padding:
+            0
+            12px
+            12px;
+
+        grid-template-columns:
+            1fr
+            1fr;
+    }
+
+
+    .card-action-form {
+        grid-column: 1 / -1;
+    }
+
+
+    .movie-title {
+        font-size: 0.94rem;
+    }
+
+
+    .movie-main-info {
+        min-height: 74px;
+    }
+
+
+    .movie-metadata {
+        font-size: 0.7rem;
+    }
+
+
+    /*
+     * Date Added เป็นข้อมูลรอง
+     * จึงซ่อนบนจอเล็กเพื่อให้ Card กระชับขึ้น
+     */
+    .date-added {
+        display: none;
+    }
+
+
+    .status-pill {
+        top: 8px;
+        left: 8px;
+
+        font-size: 0.6rem;
+    }
+
+
+    .search-panel {
+        padding: var(--space-2);
+    }
+
+
+    .form-actions,
+    .confirm-actions {
+        flex-direction: column;
+    }
+
+
+    .form-actions .button,
+    .confirm-actions .button {
+        width: 100%;
+    }
+}
+
+
+
+/*
+ * 22. Reduced Motion Accessibility
+ *
+ * ผู้ใช้บางคนตั้ง OS/browser
+ * ให้ลด animation ด้วย prefers-reduced-motion
+ *
+ * เมื่อเปิด setting นี้
+ * UI จะลด transition และ smooth scrolling
+ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}

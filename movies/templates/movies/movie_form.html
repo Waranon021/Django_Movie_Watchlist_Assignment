@@ -1,65 +1,246 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "movies/base.html" %}
 
-    <title>
+
+{% block title %}
+
     {% if movie %}
-        Edit Movie
+        Edit Movie | Movie Watchlist
     {% else %}
-        Add Movie
+        Add Movie | Movie Watchlist
     {% endif %}
-    | Movie Watchlist
-</title>
 
-</head>
+{% endblock %}
 
-<body>
-    <main>
-        <h1>
-    {% if movie %}
-        Edit Movie
-    {% else %}
-        Add Movie
-    {% endif %}
-</h1>
+
+
+{% block content %}
+
+<!--
+    1. Add / Edit Movie Page
+
+    Template นี้ถูกใช้ร่วมกันโดยสอง Views:
+
+    movie_add():
+        ไม่มี Movie instance เดิม
+        จึงใช้สำหรับสร้าง Movie ใหม่
+
+    movie_edit():
+        ส่ง Movie object เดิมมาใน context
+        จึงใช้สำหรับแก้ไข Movie ที่มีอยู่แล้ว
+
+    การใช้ Template เดียวกันช่วยลด HTML ที่ซ้ำกัน
+    และทำให้ UI ของ Add/Edit สม่ำเสมอ
+-->
+<section class="form-page">
+
+    <div class="form-intro">
 
         <!--
-            method="post" ใช้ส่งข้อมูลเพื่อสร้าง Movie ใหม่
+            ถ้ามีตัวแปร movie ใน context
+            หมายถึงหน้า Edit
 
-            action ไม่ถูกกำหนดไว้
-            ดังนั้น form จะ submit กลับ URL ปัจจุบัน
-            ซึ่งก็คือ /movies/add/
+            ถ้าไม่มี
+            หมายถึงหน้า Add
         -->
-        <form method="post">
+        <p class="eyebrow">
+
+            {% if movie %}
+                UPDATE MOVIE
+            {% else %}
+                MANUAL ENTRY
+            {% endif %}
+
+        </p>
+
+
+        <h1>
+
+            {% if movie %}
+                Edit Movie
+            {% else %}
+                Add Movie
+            {% endif %}
+
+        </h1>
+
+
+        <p class="hero-description">
+
+            {% if movie %}
+
+                Update the information stored
+                in your local watchlist.
+
+            {% else %}
+
+                Add a movie manually without using TMDB.
+
+            {% endif %}
+
+        </p>
+
+    </div>
+
+
+
+    <!--
+        2. Movie Form
+
+        form variable มาจาก MovieForm ใน forms.py
+
+        MovieForm เป็น ModelForm
+        จึงเชื่อมกับ Movie model โดยตรง
+    -->
+    <div class="form-card">
+
+        <form
+            method="post"
+            class="movie-form"
+        >
 
             <!--
-                CSRF token ใช้ป้องกัน Cross-Site Request Forgery
-                Django จะตรวจ token ก่อนยอมรับ POST request
+                Add และ Edit เป็น operation
+                ที่สามารถเปลี่ยนข้อมูลใน PostgreSQL
+
+                Django จึงต้องใช้ CSRF protection
+                สำหรับ POST form
             -->
             {% csrf_token %}
 
-            <!--
-                Django render fields ที่มาจาก MovieForm
-                .as_p จะครอบแต่ละ field ด้วย <p>
-                รอบนี้ใช้แบบพื้นฐานก่อน แล้วค่อยออกแบบ UI ภายหลัง
-            -->
-            {{ form.as_p }}
 
-            <button type="submit">
-    {% if movie %}
-        Save Changes
-    {% else %}
-        Add Movie
-    {% endif %}
-</button>
+
+            <!--
+                2.1 Non-field Errors
+
+                ปกติ validation error เช่น Title ว่าง
+                จะผูกกับ field โดยตรง
+
+                แต่ถ้าในอนาคตมี validation
+                ที่เกี่ยวกับหลาย field พร้อมกัน
+                error อาจอยู่ใน non_field_errors
+            -->
+            {% if form.non_field_errors %}
+
+                <div class="message-box message-error">
+                    {{ form.non_field_errors }}
+                </div>
+
+            {% endif %}
+
+
+
+            <!--
+                2.2 Form Fields
+
+                แทนการใช้ form.as_p แบบเดิม
+                เรา loop แต่ละ field เอง
+
+                ข้อดีคือสามารถกำหนด:
+                    layout
+                    label
+                    help text
+                    validation error
+                    spacing
+
+                ได้ละเอียดขึ้นโดยไม่แก้ MovieForm logic
+            -->
+            {% for field in form %}
+
+                <div class="form-field">
+
+                    <!--
+                        id_for_label เชื่อม label
+                        กับ input ของ field นั้นโดยอัตโนมัติ
+                    -->
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+
+                    <!--
+                        Django เป็นผู้ render input จริง
+                        จาก field ที่กำหนดใน MovieForm
+                    -->
+                    {{ field }}
+
+
+                    <!--
+                        help_text จะแสดงเฉพาะ field
+                        ที่มี help text กำหนดไว้
+                    -->
+                    {% if field.help_text %}
+
+                        <small class="field-help">
+                            {{ field.help_text }}
+                        </small>
+
+                    {% endif %}
+
+
+                    <!--
+                        ถ้า field validation ไม่ผ่าน
+                        แสดง error ใต้ช่องนั้นโดยตรง
+
+                        ตัวอย่าง:
+                            title ว่าง
+                            personal_rating เกิน 5
+                    -->
+                    {% if field.errors %}
+
+                        <div class="field-errors">
+                            {{ field.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+
+
+            <!--
+                2.3 Form Actions
+
+                Submit button ใช้ข้อความต่างกัน
+                ระหว่าง Add และ Edit
+
+                แต่ทั้งสองส่ง POST กลับไปยัง URL
+                ของหน้าปัจจุบันเหมือนกัน
+            -->
+            <div class="form-actions">
+
+                <button
+                    class="button button-primary"
+                    type="submit"
+                >
+
+                    {% if movie %}
+                        Save Changes
+                    {% else %}
+                        Add Movie
+                    {% endif %}
+
+                </button>
+
+
+                <!--
+                    Cancel ไม่แก้ database
+                    เพียงกลับไปหน้า Movie Watchlist
+                -->
+                <a
+                    class="button button-ghost"
+                    href="{% url 'movie_list' %}"
+                >
+                    Cancel
+                </a>
+
+            </div>
 
         </form>
 
-        <p>
-            <a href="{% url 'movie_list' %}">Back to Watchlist</a>
-        </p>
-    </main>
-</body>
-</html>
+    </div>
+
+</section>
+
+{% endblock %}

@@ -1,44 +1,113 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "movies/base.html" %}
 
-    <title>Delete Movie | Movie Watchlist</title>
-</head>
 
-<body>
-    <main>
-        <h1>Delete Movie</h1>
+{% block title %}
+    Delete Movie | Movie Watchlist
+{% endblock %}
+
+
+
+{% block content %}
+
+<!--
+    1. Delete Confirmation Page
+
+    movie_delete() View จะค้น Movie object
+    จาก movie_id ก่อน render หน้านี้
+
+    การเปิดหน้านี้ด้วย GET
+    ยังไม่ได้ลบข้อมูลใด ๆ
+
+    จุดประสงค์ของหน้า Confirmation คือ
+    ลดโอกาสที่ผู้ใช้จะลบ Movie โดยไม่ได้ตั้งใจ
+-->
+<section class="confirm-page">
+
+    <div class="confirm-card">
 
         <!--
-            แสดงชื่อ Movie เพื่อให้ผู้ใช้ตรวจสอบ
-            ก่อนยืนยันการลบข้อมูลจริง
+            Icon นี้เป็น presentation เท่านั้น
+            และไม่ได้มี logic เชื่อมกับ backend
         -->
-        <p>
-            Are you sure you want to delete
-            <strong>{{ movie.title }}</strong>?
+        <div class="danger-icon">
+            !
+        </div>
+
+
+        <p class="eyebrow danger-text">
+            DELETE MOVIE
         </p>
 
+
         <!--
-            การลบข้อมูลจริงใช้ POST request
-            ไม่ใช้ link หรือ GET request โดยตรง
+            movie.title มาจาก Movie object
+            ที่ movie_delete() ส่งมาใน context
         -->
-        <form method="post">
+        <h1>
+            Delete "{{ movie.title }}"?
+        </h1>
+
+
+        <p class="confirm-description">
+            This movie will be permanently removed
+            from your local watchlist.
+        </p>
+
+
+
+        <!--
+            2. Delete Action
+
+            Form ไม่มี action URL เพราะ submit
+            กลับไปยัง URL ปัจจุบัน
+
+            GET:
+                View render confirmation page
+
+            POST:
+                View เข้า request.method == "POST"
+                และเรียก movie.delete()
+
+            จึงไม่มีการลบข้อมูลเพียงเพราะผู้ใช้
+            เปิด URL ของหน้า Delete
+        -->
+        <form
+            method="post"
+            class="confirm-actions"
+        >
 
             <!--
-                CSRF token ป้องกัน POST request
-                ที่ไม่ได้มาจาก form ที่ Django อนุญาต
+                Delete เป็น database-changing operation
+                จึงต้องมี CSRF token
             -->
             {% csrf_token %}
 
-            <button type="submit">Yes, Delete</button>
+
+            <button
+                class="button button-danger"
+                type="submit"
+            >
+                Yes, Delete
+            </button>
+
+
+            <!--
+                Cancel ไม่ส่ง POST
+                จึงไม่มีการลบ Movie
+
+                เพียงกลับไปหน้า Movie Watchlist
+            -->
+            <a
+                class="button button-secondary"
+                href="{% url 'movie_list' %}"
+            >
+                Cancel
+            </a>
+
         </form>
 
-        <p>
-            <!-- ยกเลิกการลบและกลับหน้า Movie Watchlist -->
-            <a href="{% url 'movie_list' %}">Cancel</a>
-        </p>
-    </main>
-</body>
-</html>
+    </div>
+
+</section>
+
+{% endblock %}
